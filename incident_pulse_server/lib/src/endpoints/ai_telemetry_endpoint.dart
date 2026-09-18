@@ -14,7 +14,8 @@ import '../generated/protocol.dart';
 class AiTelemetryEndpoint extends Endpoint {
   /// Verifies optional pre-shared agent authentication key
   bool _isAuthorized(Session session, String? authToken) {
-    final configuredKey = Platform.environment['AI_TELEMETRY_BRIDGE_KEY'];
+    final configuredKey = session.passwords['AI_TELEMETRY_BRIDGE_KEY'] ??
+        Platform.environment['AI_TELEMETRY_BRIDGE_KEY'];
     if (configuredKey == null || configuredKey.isEmpty) {
       return true; // Local development mode
     }
