@@ -1,0 +1,13 @@
+name: incident_pulse_client
+description: Shared client library and protocols for IncidentPulse.
+version: 1.0.0
+
+environment:
+  sdk: '^3.3.0'
+
+dependencies:
+  serverpod_client: ^2.4.0
+  serverpod_auth_client: ^2.4.0
+
+dev_dependencies:
+  lints: ^3.0.0

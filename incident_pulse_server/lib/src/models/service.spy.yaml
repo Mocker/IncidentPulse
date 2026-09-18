@@ -1,0 +1,16 @@
+class: Service
+table: service
+fields:
+  name: String
+  slug: String
+  webhookKey: String
+  pingUrl: String?
+  status: String # operational, degraded, down, maintenance
+  checkIntervalSeconds: int
+  lastPingAt: DateTime?
+  lastPingStatus: int?
+  isInternalOwner: bool # true for internal projects; false for external client tenants
+  enableAiBridge: bool # strictly false by default for external customers (explicit opt-in only)
+  dataRetentionDays: int # 30, 90, 180, 365 (compliance window)
+  redactPii: bool # automatically scrub tokens, cookies, auth headers, and customer PII
+  createdAt: DateTime

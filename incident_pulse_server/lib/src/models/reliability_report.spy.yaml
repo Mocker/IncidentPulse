@@ -1,0 +1,10 @@
+class: ReliabilityReport
+table: reliability_report
+fields:
+  serviceId: int, relation(parent=Service)
+  uptimePercent: double
+  incidentCount: int
+  mttrMinutes: double
+  healthScore: double
+  reportSummary: String
+  generatedAt: DateTime

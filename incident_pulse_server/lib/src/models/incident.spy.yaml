@@ -1,0 +1,16 @@
+class: Incident
+table: incident
+fields:
+  serviceId: int, relation(parent=Service)
+  title: String
+  description: String
+  severity: String # low, medium, high, critical
+  status: String # triggered, acknowledged, investigating, resolved
+  source: String # sentry, stripe, uptime, github, manual, custom
+  rootCause: String?
+  rawPayload: String? # raw webhook or alert payload
+  isRedacted: bool # true once raw payload/PII is scrubbed per retention policy
+  expiresAt: DateTime? # timestamp when raw payload or incident is scheduled for automated compliance purge
+  triggeredAt: DateTime
+  acknowledgedAt: DateTime?
+  resolvedAt: DateTime?

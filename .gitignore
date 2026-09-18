@@ -1,0 +1,62 @@
+# ==========================================
+# IncidentPulse Git Ignore Rules
+# ==========================================
+
+# --- Secrets & Credentials (CRITICAL) ---
+**/config/passwords.yaml
+!**/config/passwords.example.yaml
+*.env
+*.env.*
+*.key
+*.pem
+*.cert
+*.p12
+*.jks
+*.keystore
+
+# --- Database & Persistent Storage ---
+postgres_data/
+redis_data/
+postgres_staging_data/
+redis_staging_data/
+*.sqlite
+*.sqlite3
+*.db
+
+# --- Serverpod ---
+.serverpod/
+**/config/*.local.yaml
+
+# --- Dart & Flutter ---
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+# Android / iOS build artifacts (if native projects added)
+**/android/app/build/
+**/android/.gradle/
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Generated.xcconfig
+
+# --- Python (Staging scripts) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# --- IDEs & Editors ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- Logs ---
+*.log

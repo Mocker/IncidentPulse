@@ -1,0 +1,8 @@
+class: EscalationPolicy
+table: escalation_policy
+fields:
+  serviceId: int, relation(parent=Service)
+  timeoutMinutes: int
+  notifyEmail: String?
+  notifyWebhookUrl: String?
+  isActive: bool

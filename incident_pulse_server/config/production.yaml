@@ -1,0 +1,29 @@
+# Serverpod Production Configuration
+apiServer:
+  port: 8080
+  publicHost: api.incidentpulse.dev
+  publicPort: 443
+  publicScheme: https
+
+insightsServer:
+  port: 8082
+  publicHost: insights.incidentpulse.dev
+  publicPort: 443
+  publicScheme: https
+
+webServer:
+  port: 8081
+  publicHost: incidentpulse.dev
+  publicPort: 443
+  publicScheme: https
+
+database:
+  host: db.incidentpulse.internal
+  port: 5432
+  name: incident_pulse_prod
+  user: incident_pulse
+
+redis:
+  enabled: true
+  host: redis.incidentpulse.internal
+  port: 6379

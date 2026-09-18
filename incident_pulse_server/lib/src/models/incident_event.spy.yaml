@@ -1,0 +1,9 @@
+class: IncidentEvent
+table: incident_event
+fields:
+  incidentId: int, relation(parent=Incident)
+  author: String # User name, 'AI Assistant', or 'Webhook'
+  eventType: String # status_change, note, alert, ai_insight
+  content: String
+  isRedacted: bool # true if event content has been scrubbed/anonymized under data retention rules
+  createdAt: DateTime

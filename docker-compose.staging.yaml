@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: postgres:16.2-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: incident_pulse
+      POSTGRES_PASSWORD: incident_pulse_password
+      POSTGRES_DB: incident_pulse_staging
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incident_pulse -d incident_pulse_staging"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_staging_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Synthetic microservice target for uptime probe and fault injection testing
+  mock_microservice:
+    image: python:3.11-alpine
+    restart: unless-stopped
+    command: >
+      python -c "
+      import http.server, socketserver, json
+
+      class MockHandler(http.server.SimpleHTTPRequestHandler):
+          state = {'healthy': True}
+          def do_GET(self):
+              if self.path == '/health':
+                  if self.state['healthy']:
+                      self.send_response(200)
+                      self.send_header('Content-Type', 'application/json')
+                      self.end_headers()
+                      self.wfile.write(b'{\"status\": \"operational\", \"uptime\": 99.98}')
+                  else:
+                      self.send_response(503)
+                      self.send_header('Content-Type', 'application/json')
+                      self.end_headers()
+                      self.wfile.write(b'{\"status\": \"down\", \"error\": \"Internal Server Error\"}')
+              elif self.path == '/toggle-failure':
+                  self.state['healthy'] = not self.state['healthy']
+                  self.send_response(200)
+                  self.end_headers()
+                  self.wfile.write(f'Mock healthy={self.state[\"healthy\"]}'.encode())
+              else:
+                  self.send_response(404)
+                  self.end_headers()
+
+      with socketserver.TCPServer(('', 9001), MockHandler) as httpd:
+          print('Mock microservice running on port 9001')
+          httpd.serve_forever()
+      "
+    ports:
+      - "9001:9001"
+
+volumes:
+  postgres_staging_data:
+  redis_staging_data:

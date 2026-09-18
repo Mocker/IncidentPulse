@@ -1,0 +1,15 @@
+name: incident_pulse_server
+description: Serverpod 4 backend server for IncidentPulse incident commander and realtime war room.
+version: 1.0.0
+
+environment:
+  sdk: '^3.3.0'
+
+dependencies:
+  serverpod: ^2.4.0
+  serverpod_auth_server: ^2.4.0
+  http: ^1.2.0
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.25.0
