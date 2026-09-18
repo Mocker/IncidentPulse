@@ -1,0 +1,21 @@
+aiTelemetry:
+  - getTelemetrySummary:
+  - submitAiDiagnosis:
+  - recordReliabilityReport:
+incident:
+  - getActiveIncidents:
+  - getServiceIncidents:
+  - createIncident:
+  - acknowledgeIncident:
+  - resolveIncident:
+service:
+  - listServices:
+  - createService:
+  - updateServiceStatus:
+  - updatePrivacyAndRetention:
+  - purgeServiceHistory:
+warRoom:
+  - streamWarRoom:
+  - postWarRoomNote:
+webhook:
+  - ingestWebhook:

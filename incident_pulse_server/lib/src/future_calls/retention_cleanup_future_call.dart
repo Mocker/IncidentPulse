@@ -9,8 +9,7 @@ import '../generated/protocol.dart';
 /// - Raw webhook payloads, sensitive HTTP headers, and granular PII are purged/redacted
 ///   once the configured retention window (e.g. 30, 90, 180, 365 days) expires.
 class RetentionCleanupFutureCall extends FutureCall {
-  @override
-  Future<void> run(Session session, dynamic object) async {
+  Future<void> cleanup(Session session) async {
     final now = DateTime.now();
     session.log('Running automated data retention and compliance cleanup...', level: LogLevel.info);
 
@@ -53,13 +52,6 @@ class RetentionCleanupFutureCall extends FutureCall {
     session.log(
       'Data retention cleanup complete: Sanitized $sanitizedCount expired incidents.',
       level: LogLevel.info,
-    );
-
-    // Re-schedule for next 24 hours
-    await session.serverpod.futureCallWithDelay(
-      'RetentionCleanupFutureCall',
-      null,
-      const Duration(hours: 24),
     );
   }
 }

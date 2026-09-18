@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
+import '../generated/future_calls.dart';
 
 class WebhookEndpoint extends Endpoint {
   /// Public webhook ingress endpoint.
@@ -101,11 +102,10 @@ class WebhookEndpoint extends Endpoint {
     );
 
     // Schedule escalation check via FutureCall
-    await session.serverpod.futureCallWithDelay(
-      'EscalationFutureCall',
-      created,
-      const Duration(minutes: 5),
-    );
+    await session.serverpod.futureCalls
+        .callWithDelay(const Duration(minutes: 5))
+        .escalation
+        .escalate(created);
 
     // Only dispatch to AI telemetry bridge if this is an internal project or customer explicitly opted-in
     if (service.isInternalOwner || service.enableAiBridge) {

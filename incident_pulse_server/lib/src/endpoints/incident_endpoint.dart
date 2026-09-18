@@ -7,8 +7,7 @@ class IncidentEndpoint extends Endpoint {
     return await Incident.db.find(
       session,
       where: (t) => t.status.notEquals('resolved'),
-      orderBy: (t) => t.triggeredAt,
-      orderDescending: true,
+      orderBy: (t) => t.triggeredAt.desc(),
     );
   }
 
@@ -21,8 +20,7 @@ class IncidentEndpoint extends Endpoint {
     return await Incident.db.find(
       session,
       where: (t) => t.serviceId.equals(serviceId),
-      orderBy: (t) => t.triggeredAt,
-      orderDescending: true,
+      orderBy: (t) => t.triggeredAt.desc(),
       limit: limit,
     );
   }
@@ -44,6 +42,7 @@ class IncidentEndpoint extends Endpoint {
       severity: severity,
       status: 'triggered',
       source: source,
+      isRedacted: false,
       triggeredAt: now,
     );
 
@@ -55,6 +54,7 @@ class IncidentEndpoint extends Endpoint {
       author: 'System',
       eventType: 'status_change',
       content: 'Incident triggered with severity: $severity',
+      isRedacted: false,
       createdAt: now,
     );
     await IncidentEvent.db.insertRow(session, event);
@@ -89,6 +89,7 @@ class IncidentEndpoint extends Endpoint {
       author: responderName,
       eventType: 'status_change',
       content: 'Incident acknowledged by $responderName',
+      isRedacted: false,
       createdAt: now,
     );
     await IncidentEvent.db.insertRow(session, event);
@@ -120,6 +121,7 @@ class IncidentEndpoint extends Endpoint {
       author: resolverName,
       eventType: 'status_change',
       content: 'Incident resolved by $resolverName. Root Cause: $rootCause',
+      isRedacted: false,
       createdAt: now,
     );
     await IncidentEvent.db.insertRow(session, event);

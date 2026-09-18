@@ -1,7 +1,7 @@
 class: Incident
 table: incident
 fields:
-  serviceId: int, relation(parent=Service)
+  serviceId: int, relation(parent=service)
   title: String
   description: String
   severity: String # low, medium, high, critical

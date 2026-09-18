@@ -1,7 +1,7 @@
 class: EscalationPolicy
 table: escalation_policy
 fields:
-  serviceId: int, relation(parent=Service)
+  serviceId: int, relation(parent=service)
   timeoutMinutes: int
   notifyEmail: String?
   notifyWebhookUrl: String?

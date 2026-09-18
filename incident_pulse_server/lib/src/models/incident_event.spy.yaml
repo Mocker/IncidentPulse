@@ -1,7 +1,7 @@
 class: IncidentEvent
 table: incident_event
 fields:
-  incidentId: int, relation(parent=Incident)
+  incidentId: int, relation(parent=incident)
   author: String # User name, 'AI Assistant', or 'Webhook'
   eventType: String # status_change, note, alert, ai_insight
   content: String

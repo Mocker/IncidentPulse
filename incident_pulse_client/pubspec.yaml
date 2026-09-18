@@ -6,8 +6,8 @@ environment:
   sdk: '^3.3.0'
 
 dependencies:
-  serverpod_client: ^2.4.0
-  serverpod_auth_client: ^2.4.0
+  serverpod_client: ^4.0.1
+  serverpod_auth_client: ^4.0.1
 
 dev_dependencies:
   lints: ^3.0.0

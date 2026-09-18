@@ -11,8 +11,8 @@ dependencies:
     sdk: flutter
   incident_pulse_client:
     path: ../incident_pulse_client
-  serverpod_flutter: ^2.4.0
-  serverpod_auth_shared_flutter: ^2.4.0
+  serverpod_flutter: ^4.0.1
+  serverpod_auth_shared_flutter: ^4.0.1
   intl: ^0.19.0
 
 dev_dependencies:

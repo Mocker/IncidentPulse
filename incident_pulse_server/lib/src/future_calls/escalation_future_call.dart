@@ -4,9 +4,8 @@ import '../generated/protocol.dart';
 /// Background task that checks if a triggered incident is still unacknowledged
 /// after the escalation timeout window. If still unacknowledged, escalates
 /// to secondary channels (e.g. founder SMS/email or emergency webhook dispatch).
-class EscalationFutureCall extends FutureCall<Incident> {
-  @override
-  Future<void> run(Session session, Incident? incident) async {
+class EscalationFutureCall extends FutureCall {
+  Future<void> escalate(Session session, Incident? incident) async {
     if (incident == null || incident.id == null) return;
 
     // Reload latest state of incident from DB
@@ -26,6 +25,7 @@ class EscalationFutureCall extends FutureCall<Incident> {
         author: 'Escalation Engine',
         eventType: 'alert',
         content: '⚠️ Escalation alert: Incident unacknowledged for > 5 minutes. Notifying secondary on-call and registered incident responders.',
+        isRedacted: false,
         createdAt: now,
       );
       await IncidentEvent.db.insertRow(session, event);

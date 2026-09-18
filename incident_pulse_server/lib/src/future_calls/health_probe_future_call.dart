@@ -1,13 +1,11 @@
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 
 /// Periodic background worker that probes configured health endpoints
 /// for registered services and records latency / downtime.
-class HealthProbeFutureCall extends FutureCall<Service> {
-  @override
-  Future<void> run(Session session, Service? service) async {
+class HealthProbeFutureCall extends FutureCall {
+  Future<void> probe(Session session, Service? service) async {
     if (service == null || service.id == null || service.pingUrl == null) return;
 
     final url = Uri.tryParse(service.pingUrl!);
@@ -40,6 +38,7 @@ class HealthProbeFutureCall extends FutureCall<Service> {
             severity: 'high',
             status: 'triggered',
             source: 'uptime',
+            isRedacted: false,
             triggeredAt: now,
           );
           final created = await Incident.db.insertRow(session, incident);
@@ -49,6 +48,7 @@ class HealthProbeFutureCall extends FutureCall<Service> {
             author: 'Synthetic Health Probe',
             eventType: 'alert',
             content: 'Synthetic uptime probe returned HTTP ${response.statusCode}',
+            isRedacted: false,
             createdAt: now,
           );
           await IncidentEvent.db.insertRow(session, event);

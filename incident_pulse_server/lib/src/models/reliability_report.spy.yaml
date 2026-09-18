@@ -1,7 +1,7 @@
 class: ReliabilityReport
 table: reliability_report
 fields:
-  serviceId: int, relation(parent=Service)
+  serviceId: int, relation(parent=service)
   uptimePercent: double
   incidentCount: int
   mttrMinutes: double

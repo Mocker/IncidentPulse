@@ -39,6 +39,7 @@ class WarRoomEndpoint extends Endpoint {
       author: author,
       eventType: eventType,
       content: content,
+      isRedacted: false,
       createdAt: now,
     );
 
