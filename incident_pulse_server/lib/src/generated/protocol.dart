@@ -13,6 +13,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:incident_pulse_server/src/generated/incident.dart' as _ix5n0svs;
 import 'package:incident_pulse_server/src/generated/service.dart' as _i9u6usup;
+import 'package:incident_pulse_server/src/generated/webhook_subscription.dart'
+    as _imz83oex;
 import 'package:serverpod/protocol.dart' as _isp;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i1n3uhu0;
@@ -21,11 +23,13 @@ import 'incident.dart' as _iy4wsyyx;
 import 'incident_event.dart' as _icglyrab;
 import 'reliability_report.dart' as _i48x74ln;
 import 'service.dart' as _i70zm44a;
+import 'webhook_subscription.dart' as _itnvi5b5;
 export 'escalation_policy.dart';
 export 'incident.dart';
 export 'incident_event.dart';
 export 'reliability_report.dart';
 export 'service.dart';
+export 'webhook_subscription.dart';
 
 class Protocol extends _is.DatabaseSerializationManager {
   Protocol._();
@@ -439,6 +443,83 @@ class Protocol extends _is.DatabaseSerializationManager {
           indexes: [],
           managed: true,
         ),
+        _isp.TableDefinition(
+          name: 'webhook_subscription',
+          dartName: 'WebhookSubscription',
+          schema: 'public',
+          module: 'incident_pulse',
+          columns: [
+            _isp.ColumnDefinition(
+              name: 'id',
+              columnType: _isp.ColumnType.bigint,
+              isNullable: false,
+              dartType: 'int?',
+              columnDefault: 'serial',
+            ),
+            _isp.ColumnDefinition(
+              name: 'serviceId',
+              columnType: _isp.ColumnType.bigint,
+              isNullable: true,
+              dartType: 'int?',
+            ),
+            _isp.ColumnDefinition(
+              name: 'name',
+              columnType: _isp.ColumnType.text,
+              isNullable: false,
+              dartType: 'String',
+            ),
+            _isp.ColumnDefinition(
+              name: 'targetUrl',
+              columnType: _isp.ColumnType.text,
+              isNullable: false,
+              dartType: 'String',
+            ),
+            _isp.ColumnDefinition(
+              name: 'secretKey',
+              columnType: _isp.ColumnType.text,
+              isNullable: true,
+              dartType: 'String?',
+            ),
+            _isp.ColumnDefinition(
+              name: 'customHeaders',
+              columnType: _isp.ColumnType.json,
+              isNullable: true,
+              dartType: 'Map<String,String>?',
+            ),
+            _isp.ColumnDefinition(
+              name: 'events',
+              columnType: _isp.ColumnType.json,
+              isNullable: false,
+              dartType: 'List<String>',
+            ),
+            _isp.ColumnDefinition(
+              name: 'isActive',
+              columnType: _isp.ColumnType.boolean,
+              isNullable: false,
+              dartType: 'bool',
+            ),
+            _isp.ColumnDefinition(
+              name: 'createdAt',
+              columnType: _isp.ColumnType.timestampWithoutTimeZone,
+              isNullable: false,
+              dartType: 'DateTime',
+            ),
+          ],
+          foreignKeys: [
+            _isp.ForeignKeyDefinition(
+              constraintName: 'webhook_subscription_fk_0',
+              columns: ['serviceId'],
+              referenceTable: 'service',
+              referenceTableSchema: 'public',
+              referenceColumns: ['id'],
+              onUpdate: _isp.ForeignKeyAction.noAction,
+              onDelete: _isp.ForeignKeyAction.noAction,
+              matchType: null,
+            )
+          ],
+          indexes: [],
+          managed: true,
+        ),
         ..._i1n3uhu0.Protocol.targetTableDefinitions,
         ..._isp.Protocol.targetTableDefinitions,
       ];
@@ -485,6 +566,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i70zm44a.Service) {
       return _i70zm44a.Service.fromJson(data) as T;
     }
+    if (t == _itnvi5b5.WebhookSubscription) {
+      return _itnvi5b5.WebhookSubscription.fromJson(data) as T;
+    }
     if (t == _is.getType<_iuema0oq.EscalationPolicy?>()) {
       return (data != null ? _iuema0oq.EscalationPolicy.fromJson(data) : null)
           as T;
@@ -503,6 +587,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_i70zm44a.Service?>()) {
       return (data != null ? _i70zm44a.Service.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_itnvi5b5.WebhookSubscription?>()) {
+      return (data != null
+          ? _itnvi5b5.WebhookSubscription.fromJson(data)
+          : null) as T;
+    }
     if (t == Map<String, String>) {
       return (data as Map).map((k, v) =>
           MapEntry(deserialize<String>(k), deserialize<String>(v))) as T;
@@ -512,6 +601,9 @@ class Protocol extends _is.DatabaseSerializationManager {
           ? (data as Map).map((k, v) =>
               MapEntry(deserialize<String>(k), deserialize<String>(v)))
           : null) as T;
+    }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
     if (t == Map<String, dynamic>) {
       return (data as Map).map((k, v) =>
@@ -540,6 +632,19 @@ class Protocol extends _is.DatabaseSerializationManager {
               MapEntry(deserialize<String>(k), deserialize<String>(v)))
           : null) as T;
     }
+    if (t == List<_imz83oex.WebhookSubscription>) {
+      return (data as List)
+          .map((e) => deserialize<_imz83oex.WebhookSubscription>(e))
+          .toList() as T;
+    }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == _is.getType<List<String>?>()) {
+      return (data != null
+          ? (data as List).map((e) => deserialize<String>(e)).toList()
+          : null) as T;
+    }
     try {
       return _i1n3uhu0.Protocol().deserialize<T>(data, t);
     } on _is.DeserializationTypeNotFoundException catch (_) {}
@@ -556,6 +661,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _icglyrab.IncidentEvent => 'IncidentEvent',
       _i48x74ln.ReliabilityReport => 'ReliabilityReport',
       _i70zm44a.Service => 'Service',
+      _itnvi5b5.WebhookSubscription => 'WebhookSubscription',
       _ => null
     };
   }
@@ -581,6 +687,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'ReliabilityReport';
       case _i70zm44a.Service():
         return 'Service';
+      case _itnvi5b5.WebhookSubscription():
+        return 'WebhookSubscription';
     }
     className = _i1n3uhu0.Protocol().getClassNameForObject(data);
     if (className != null) {
@@ -613,6 +721,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'Service') {
       return deserialize<_i70zm44a.Service>(data['data']);
+    }
+    if (dataClassName == 'WebhookSubscription') {
+      return deserialize<_itnvi5b5.WebhookSubscription>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth.')) {
       data['className'] = dataClassName.substring(15);
@@ -654,6 +765,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _i48x74ln.ReliabilityReport.t;
       case _i70zm44a.Service:
         return _i70zm44a.Service.t;
+      case _itnvi5b5.WebhookSubscription:
+        return _itnvi5b5.WebhookSubscription.t;
     }
     return null;
   }

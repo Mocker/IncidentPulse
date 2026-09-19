@@ -18,6 +18,8 @@ import 'package:incident_pulse_client/src/protocol/incident_event.dart'
 import 'package:incident_pulse_client/src/protocol/reliability_report.dart'
     as _izi1yss6;
 import 'package:incident_pulse_client/src/protocol/service.dart' as _icu7ot0t;
+import 'package:incident_pulse_client/src/protocol/webhook_subscription.dart'
+    as _iwimdxih;
 import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i312scxx;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'protocol.dart' as _il2as5qe;
@@ -350,6 +352,62 @@ class EndpointWebhook extends _isc.EndpointRef {
       );
 }
 
+/// {@category Endpoint}
+class EndpointWebhookSubscription extends _isc.EndpointRef {
+  EndpointWebhookSubscription(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'webhookSubscription';
+
+  /// Lists all active outbound webhook subscriptions, optionally filtered by service
+  _ida.Future<List<_iwimdxih.WebhookSubscription>> listSubscriptions(
+          {int? serviceId}) =>
+      caller.callServerEndpoint<List<_iwimdxih.WebhookSubscription>>(
+        'webhookSubscription',
+        'listSubscriptions',
+        {'serviceId': serviceId},
+      );
+
+  /// Registers a new generic outbound webhook subscription
+  _ida.Future<_iwimdxih.WebhookSubscription> createSubscription({
+    required String name,
+    required String targetUrl,
+    int? serviceId,
+    String? secretKey,
+    Map<String, String>? customHeaders,
+    List<String>? events,
+  }) =>
+      caller.callServerEndpoint<_iwimdxih.WebhookSubscription>(
+        'webhookSubscription',
+        'createSubscription',
+        {
+          'name': name,
+          'targetUrl': targetUrl,
+          'serviceId': serviceId,
+          'secretKey': secretKey,
+          'customHeaders': customHeaders,
+          'events': events,
+        },
+      );
+
+  /// Deletes a webhook subscription
+  _ida.Future<bool> deleteSubscription({required int subscriptionId}) =>
+      caller.callServerEndpoint<bool>(
+        'webhookSubscription',
+        'deleteSubscription',
+        {'subscriptionId': subscriptionId},
+      );
+
+  /// Sends a test ping to verify webhook target connectivity and HMAC verification
+  _ida.Future<Map<String, dynamic>> testSubscription(
+          {required int subscriptionId}) =>
+      caller.callServerEndpoint<Map<String, dynamic>>(
+        'webhookSubscription',
+        'testSubscription',
+        {'subscriptionId': subscriptionId},
+      );
+}
+
 class Modules {
   Modules(Client client) {
     auth = _i312scxx.Caller(client);
@@ -389,6 +447,7 @@ class Client extends _isc.ServerpodClientShared {
     service = EndpointService(this);
     warRoom = EndpointWarRoom(this);
     webhook = EndpointWebhook(this);
+    webhookSubscription = EndpointWebhookSubscription(this);
     modules = Modules(this);
   }
 
@@ -402,6 +461,8 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointWebhook webhook;
 
+  late final EndpointWebhookSubscription webhookSubscription;
+
   late final Modules modules;
 
   @override
@@ -411,6 +472,7 @@ class Client extends _isc.ServerpodClientShared {
         'service': service,
         'warRoom': warRoom,
         'webhook': webhook,
+        'webhookSubscription': webhookSubscription,
       };
 
   @override

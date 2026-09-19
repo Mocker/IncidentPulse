@@ -1,0 +1,11 @@
+class: WebhookSubscription
+table: webhook_subscription
+fields:
+  serviceId: int?, relation(parent=service) # null means global for all services
+  name: String # e.g. "Operations Slack Channel", "Ops Pager", "Discord Alert Bot"
+  targetUrl: String # destination HTTP POST endpoint (Slack, Discord, custom API, Zapier, etc.)
+  secretKey: String? # shared HMAC secret for payload signature verification (X-IncidentPulse-Signature)
+  customHeaders: Map<String, String>? # optional Bearer tokens or gateway keys
+  events: List<String> # ["incident.triggered", "incident.acknowledged", "incident.escalated", "incident.resolved"]
+  isActive: bool
+  createdAt: DateTime

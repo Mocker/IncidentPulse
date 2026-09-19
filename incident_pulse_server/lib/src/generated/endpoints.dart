@@ -19,6 +19,7 @@ import '../endpoints/incident_endpoint.dart' as _idvfe0v9;
 import '../endpoints/service_endpoint.dart' as _ihicv58o;
 import '../endpoints/war_room_endpoint.dart' as _ia8zoqqr;
 import '../endpoints/webhook_endpoint.dart' as _iy6zjke8;
+import '../endpoints/webhook_subscription_endpoint.dart' as _inmoo6bm;
 export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
 class Endpoints extends _is.EndpointDispatch {
@@ -53,6 +54,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'webhook',
+          null,
+        ),
+      'webhookSubscription': _inmoo6bm.WebhookSubscriptionEndpoint()
+        ..initialize(
+          server,
+          'webhookSubscription',
           null,
         ),
     };
@@ -623,6 +630,122 @@ class Endpoints extends _is.EndpointDispatch {
             rawPayloadJson: params['rawPayloadJson'],
           ),
         )
+      },
+    );
+    connectors['webhookSubscription'] = _is.EndpointConnector(
+      name: 'webhookSubscription',
+      endpoint: endpoints['webhookSubscription']!,
+      methodConnectors: {
+        'listSubscriptions': _is.MethodConnector(
+          name: 'listSubscriptions',
+          params: {
+            'serviceId': _is.ParameterDescription(
+              name: 'serviceId',
+              type: _is.getType<int?>(),
+              nullable: true,
+            )
+          },
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['webhookSubscription']
+                      as _inmoo6bm.WebhookSubscriptionEndpoint)
+                  .listSubscriptions(
+            session,
+            serviceId: params['serviceId'],
+          ),
+        ),
+        'createSubscription': _is.MethodConnector(
+          name: 'createSubscription',
+          params: {
+            'name': _is.ParameterDescription(
+              name: 'name',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'targetUrl': _is.ParameterDescription(
+              name: 'targetUrl',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'serviceId': _is.ParameterDescription(
+              name: 'serviceId',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'secretKey': _is.ParameterDescription(
+              name: 'secretKey',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'customHeaders': _is.ParameterDescription(
+              name: 'customHeaders',
+              type: _is.getType<Map<String, String>?>(),
+              nullable: true,
+            ),
+            'events': _is.ParameterDescription(
+              name: 'events',
+              type: _is.getType<List<String>?>(),
+              nullable: true,
+            ),
+          },
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['webhookSubscription']
+                      as _inmoo6bm.WebhookSubscriptionEndpoint)
+                  .createSubscription(
+            session,
+            name: params['name'],
+            targetUrl: params['targetUrl'],
+            serviceId: params['serviceId'],
+            secretKey: params['secretKey'],
+            customHeaders: params['customHeaders'],
+            events: params['events'],
+          ),
+        ),
+        'deleteSubscription': _is.MethodConnector(
+          name: 'deleteSubscription',
+          params: {
+            'subscriptionId': _is.ParameterDescription(
+              name: 'subscriptionId',
+              type: _is.getType<int>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['webhookSubscription']
+                      as _inmoo6bm.WebhookSubscriptionEndpoint)
+                  .deleteSubscription(
+            session,
+            subscriptionId: params['subscriptionId'],
+          ),
+        ),
+        'testSubscription': _is.MethodConnector(
+          name: 'testSubscription',
+          params: {
+            'subscriptionId': _is.ParameterDescription(
+              name: 'subscriptionId',
+              type: _is.getType<int>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['webhookSubscription']
+                      as _inmoo6bm.WebhookSubscriptionEndpoint)
+                  .testSubscription(
+            session,
+            subscriptionId: params['subscriptionId'],
+          ),
+        ),
       },
     );
     modules['serverpod_auth'] = _i1n3uhu0.Endpoints()

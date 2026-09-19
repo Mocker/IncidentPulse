@@ -1,5 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
+import '../services/webhook_dispatcher.dart';
 
 /// Background task that checks if a triggered incident is still unacknowledged
 /// after the escalation timeout window. If still unacknowledged, escalates
@@ -47,7 +48,17 @@ class EscalationFutureCall extends FutureCall {
           'Dispatching escalation notification to email: ${policy.notifyEmail} / webhook: ${policy.notifyWebhookUrl}',
           level: LogLevel.info,
         );
-        // Dispatch external webhook/email if configured
+      }
+
+      // Dispatch generic outbound webhooks for incident.escalated
+      final service = await Service.db.findById(session, latest.serviceId);
+      if (service != null) {
+        WebhookDispatcher.dispatch(
+          session,
+          event: 'incident.escalated',
+          incident: latest,
+          service: service,
+        );
       }
     }
   }

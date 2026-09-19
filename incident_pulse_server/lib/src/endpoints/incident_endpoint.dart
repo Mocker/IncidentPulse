@@ -1,5 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
+import '../services/webhook_dispatcher.dart';
 
 class IncidentEndpoint extends Endpoint {
   /// Fetches all active / unresolved incidents
@@ -65,6 +66,17 @@ class IncidentEndpoint extends Endpoint {
       event,
     );
 
+    // Dispatch generic outbound webhooks
+    final service = await Service.db.findById(session, serviceId);
+    if (service != null) {
+      WebhookDispatcher.dispatch(
+        session,
+        event: 'incident.triggered',
+        incident: created,
+        service: service,
+      );
+    }
+
     return created;
   }
 
@@ -95,6 +107,17 @@ class IncidentEndpoint extends Endpoint {
     await IncidentEvent.db.insertRow(session, event);
 
     session.messages.postMessage('incident_$incidentId', event);
+
+    final service = await Service.db.findById(session, incident.serviceId);
+    if (service != null) {
+      WebhookDispatcher.dispatch(
+        session,
+        event: 'incident.acknowledged',
+        incident: saved,
+        service: service,
+      );
+    }
+
     return saved;
   }
 
@@ -127,6 +150,17 @@ class IncidentEndpoint extends Endpoint {
     await IncidentEvent.db.insertRow(session, event);
 
     session.messages.postMessage('incident_$incidentId', event);
+
+    final service = await Service.db.findById(session, incident.serviceId);
+    if (service != null) {
+      WebhookDispatcher.dispatch(
+        session,
+        event: 'incident.resolved',
+        incident: saved,
+        service: service,
+      );
+    }
+
     return saved;
   }
 }

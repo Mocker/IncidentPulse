@@ -14,13 +14,41 @@ class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
   final _pingUrlController = TextEditingController();
   final _pingHeadersController = TextEditingController();
 
+  final _hookNameController = TextEditingController();
+  final _hookUrlController = TextEditingController();
+  final _hookSecretController = TextEditingController();
+  final _hookHeadersController = TextEditingController();
+
   @override
   void dispose() {
     _nameController.dispose();
     _pingUrlController.dispose();
     _pingHeadersController.dispose();
+    _hookNameController.dispose();
+    _hookUrlController.dispose();
+    _hookSecretController.dispose();
+    _hookHeadersController.dispose();
     super.dispose();
   }
+
+  final List<Map<String, dynamic>> _outboundWebhooks = [
+    {
+      'id': 1,
+      'name': 'Operations Slack Channel',
+      'targetUrl': 'https://hooks.slack.com/services/T000/B000/XXXXX',
+      'events': ['incident.triggered', 'incident.escalated', 'incident.resolved'],
+      'hasSecret': true,
+      'isActive': true,
+    },
+    {
+      'id': 2,
+      'name': 'Founder On-Call Pager (HTTP POST)',
+      'targetUrl': 'https://pager.internal.company.com/v1/alerts',
+      'events': ['incident.triggered', 'incident.escalated'],
+      'hasSecret': false,
+      'isActive': true,
+    },
+  ];
 
   final List<Map<String, dynamic>> _services = [
     {
@@ -98,6 +126,53 @@ class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
           ),
           const SizedBox(height: 16),
           ..._services.map((s) => _buildServiceItem(s)),
+
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'OUTBOUND NOTIFICATION WEBHOOKS (BYOE)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white54,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Deliver JSON alerts & HMAC signatures to Slack, Discord, PagerDuty, or custom HTTP',
+                    style: TextStyle(fontSize: 11, color: Colors.white38),
+                  ),
+                ],
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
+                icon: const Icon(Icons.add_link, size: 18),
+                label: const Text('Add Webhook'),
+                onPressed: _showAddWebhookDialog,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_outboundWebhooks.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: IncidentTheme.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: IncidentTheme.surfaceBorder),
+              ),
+              child: const Center(
+                child: Text('No outbound webhooks registered yet.', style: TextStyle(color: Colors.white38, fontSize: 13)),
+              ),
+            )
+          else
+            ..._outboundWebhooks.map((w) => _buildWebhookItem(w)),
         ],
       ),
     );
@@ -507,6 +582,233 @@ class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
                 }
               },
               child: const Text('Create Service', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebhookItem(Map<String, dynamic> w) {
+    final hasSecret = w['hasSecret'] as bool;
+    final events = w['events'] as List<String>;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.webhook, size: 18, color: Color(0xFF60A5FA)),
+                    const SizedBox(width: 8),
+                    Text(
+                      w['name'] as String,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    if (hasSecret)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.4)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.verified_user_outlined, size: 11, color: Colors.greenAccent),
+                            SizedBox(width: 4),
+                            Text('HMAC Signed', style: TextStyle(fontSize: 10, color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 16, color: Colors.white38),
+                      tooltip: 'Delete Webhook',
+                      onPressed: () {
+                        setState(() {
+                          _outboundWebhooks.removeWhere((item) => item['id'] == w['id']);
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Webhook "${w['name']}" removed.')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF090D16),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: IncidentTheme.surfaceBorder),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      w['targetUrl'] as String,
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 11.5, color: Colors.white70),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                    icon: const Icon(Icons.send_rounded, size: 13, color: Color(0xFF60A5FA)),
+                    label: const Text('Test Ping', style: TextStyle(fontSize: 11, color: Color(0xFF60A5FA))),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Dispatched test event (incident.test_ping) to ${w['name']} -> HTTP 200 OK'),
+                          backgroundColor: const Color(0xFF1E293B),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: events.map((ev) {
+                return Chip(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: const Color(0xFF131B2E),
+                  label: Text(
+                    ev,
+                    style: const TextStyle(fontSize: 10, color: Colors.white70, fontFamily: 'monospace'),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddWebhookDialog() {
+    final events = <String>{
+      'incident.triggered',
+      'incident.escalated',
+      'incident.resolved',
+    };
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: IncidentTheme.surface,
+          title: const Text('Register Outbound Webhook', style: TextStyle(color: Colors.white)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _hookNameController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Integration Name',
+                    hintText: 'e.g. Slack #incidents or PagerDuty',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _hookUrlController,
+                  style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 12),
+                  decoration: const InputDecoration(
+                    labelText: 'Target URL (HTTP POST)',
+                    hintText: 'https://hooks.slack.com/services/...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _hookSecretController,
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 12),
+                  decoration: const InputDecoration(
+                    labelText: 'HMAC Secret Key (Optional)',
+                    hintText: 'Secret for X-IncidentPulse-Signature',
+                    helperText: 'Enables payload authenticity verification on your receiver',
+                    helperStyle: TextStyle(fontSize: 10.5, color: Colors.white38),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text('Subscribed Lifecycle Events:', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                ...['incident.triggered', 'incident.acknowledged', 'incident.escalated', 'incident.resolved'].map((ev) {
+                  return CheckboxListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    activeColor: const Color(0xFF2563EB),
+                    title: Text(ev, style: const TextStyle(fontSize: 12, color: Colors.white70, fontFamily: 'monospace')),
+                    value: events.contains(ev),
+                    onChanged: (val) {
+                      setDialogState(() {
+                        if (val == true) {
+                          events.add(ev);
+                        } else {
+                          events.remove(ev);
+                        }
+                      });
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _hookNameController.clear();
+                _hookUrlController.clear();
+                _hookSecretController.clear();
+                _hookHeadersController.clear();
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
+              onPressed: () {
+                if (_hookNameController.text.isNotEmpty && _hookUrlController.text.isNotEmpty) {
+                  setState(() {
+                    _outboundWebhooks.add({
+                      'id': _outboundWebhooks.length + 1,
+                      'name': _hookNameController.text.trim(),
+                      'targetUrl': _hookUrlController.text.trim(),
+                      'events': events.toList(),
+                      'hasSecret': _hookSecretController.text.trim().isNotEmpty,
+                      'isActive': true,
+                    });
+                  });
+                  _hookNameController.clear();
+                  _hookUrlController.clear();
+                  _hookSecretController.clear();
+                  _hookHeadersController.clear();
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Register Webhook', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

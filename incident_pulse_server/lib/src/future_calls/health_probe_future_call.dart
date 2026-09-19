@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
+import '../services/webhook_dispatcher.dart';
 
 /// Periodic background worker that probes configured health endpoints
 /// for registered services and records latency / downtime.
@@ -64,6 +65,14 @@ class HealthProbeFutureCall extends FutureCall {
           );
           await IncidentEvent.db.insertRow(session, event);
           session.messages.postMessage('incident_${created.id}', event);
+
+          // Dispatch generic outbound webhooks
+          WebhookDispatcher.dispatch(
+            session,
+            event: 'incident.triggered',
+            incident: created,
+            service: service,
+          );
         }
       }
     } catch (e) {

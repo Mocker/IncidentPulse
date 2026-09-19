@@ -20,3 +20,8 @@ warRoom:
   - postWarRoomNote:
 webhook:
   - ingestWebhook:
+webhookSubscription:
+  - listSubscriptions:
+  - createSubscription:
+  - deleteSubscription:
+  - testSubscription:

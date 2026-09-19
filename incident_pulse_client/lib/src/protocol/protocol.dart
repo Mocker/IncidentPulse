@@ -13,6 +13,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:incident_pulse_client/src/protocol/incident.dart' as _ii2a5p2r;
 import 'package:incident_pulse_client/src/protocol/service.dart' as _icu7ot0t;
+import 'package:incident_pulse_client/src/protocol/webhook_subscription.dart'
+    as _iwimdxih;
 import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i312scxx;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'escalation_policy.dart' as _iuema0oq;
@@ -20,11 +22,13 @@ import 'incident.dart' as _iy4wsyyx;
 import 'incident_event.dart' as _icglyrab;
 import 'reliability_report.dart' as _i48x74ln;
 import 'service.dart' as _i70zm44a;
+import 'webhook_subscription.dart' as _itnvi5b5;
 export 'escalation_policy.dart';
 export 'incident.dart';
 export 'incident_event.dart';
 export 'reliability_report.dart';
 export 'service.dart';
+export 'webhook_subscription.dart';
 export 'client.dart';
 
 class Protocol extends _isc.SerializationManager {
@@ -76,6 +80,9 @@ class Protocol extends _isc.SerializationManager {
     if (t == _i70zm44a.Service) {
       return _i70zm44a.Service.fromJson(data) as T;
     }
+    if (t == _itnvi5b5.WebhookSubscription) {
+      return _itnvi5b5.WebhookSubscription.fromJson(data) as T;
+    }
     if (t == _isc.getType<_iuema0oq.EscalationPolicy?>()) {
       return (data != null ? _iuema0oq.EscalationPolicy.fromJson(data) : null)
           as T;
@@ -94,6 +101,11 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_i70zm44a.Service?>()) {
       return (data != null ? _i70zm44a.Service.fromJson(data) : null) as T;
     }
+    if (t == _isc.getType<_itnvi5b5.WebhookSubscription?>()) {
+      return (data != null
+          ? _itnvi5b5.WebhookSubscription.fromJson(data)
+          : null) as T;
+    }
     if (t == Map<String, String>) {
       return (data as Map).map((k, v) =>
           MapEntry(deserialize<String>(k), deserialize<String>(v))) as T;
@@ -103,6 +115,9 @@ class Protocol extends _isc.SerializationManager {
           ? (data as Map).map((k, v) =>
               MapEntry(deserialize<String>(k), deserialize<String>(v)))
           : null) as T;
+    }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
     if (t == Map<String, dynamic>) {
       return (data as Map).map((k, v) =>
@@ -131,6 +146,19 @@ class Protocol extends _isc.SerializationManager {
               MapEntry(deserialize<String>(k), deserialize<String>(v)))
           : null) as T;
     }
+    if (t == List<_iwimdxih.WebhookSubscription>) {
+      return (data as List)
+          .map((e) => deserialize<_iwimdxih.WebhookSubscription>(e))
+          .toList() as T;
+    }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == _isc.getType<List<String>?>()) {
+      return (data != null
+          ? (data as List).map((e) => deserialize<String>(e)).toList()
+          : null) as T;
+    }
     try {
       return _i312scxx.Protocol().deserialize<T>(data, t);
     } on _isc.DeserializationTypeNotFoundException catch (_) {}
@@ -144,6 +172,7 @@ class Protocol extends _isc.SerializationManager {
       _icglyrab.IncidentEvent => 'IncidentEvent',
       _i48x74ln.ReliabilityReport => 'ReliabilityReport',
       _i70zm44a.Service => 'Service',
+      _itnvi5b5.WebhookSubscription => 'WebhookSubscription',
       _ => null
     };
   }
@@ -169,6 +198,8 @@ class Protocol extends _isc.SerializationManager {
         return 'ReliabilityReport';
       case _i70zm44a.Service():
         return 'Service';
+      case _itnvi5b5.WebhookSubscription():
+        return 'WebhookSubscription';
     }
     className = _i312scxx.Protocol().getClassNameForObject(data);
     if (className != null) {
@@ -197,6 +228,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'Service') {
       return deserialize<_i70zm44a.Service>(data['data']);
+    }
+    if (dataClassName == 'WebhookSubscription') {
+      return deserialize<_itnvi5b5.WebhookSubscription>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth.')) {
       data['className'] = dataClassName.substring(15);
