@@ -375,6 +375,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               dartType: 'String?',
             ),
             _isp.ColumnDefinition(
+              name: 'pingHeaders',
+              columnType: _isp.ColumnType.json,
+              isNullable: true,
+              dartType: 'Map<String,String>?',
+            ),
+            _isp.ColumnDefinition(
               name: 'status',
               columnType: _isp.ColumnType.text,
               isNullable: false,
@@ -497,6 +503,16 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_i70zm44a.Service?>()) {
       return (data != null ? _i70zm44a.Service.fromJson(data) : null) as T;
     }
+    if (t == Map<String, String>) {
+      return (data as Map).map((k, v) =>
+          MapEntry(deserialize<String>(k), deserialize<String>(v))) as T;
+    }
+    if (t == _is.getType<Map<String, String>?>()) {
+      return (data != null
+          ? (data as Map).map((k, v) =>
+              MapEntry(deserialize<String>(k), deserialize<String>(v)))
+          : null) as T;
+    }
     if (t == Map<String, dynamic>) {
       return (data as Map).map((k, v) =>
           MapEntry(deserialize<String>(k), deserialize<dynamic>(v))) as T;
@@ -513,6 +529,16 @@ class Protocol extends _is.DatabaseSerializationManager {
       return (data as List)
           .map((e) => deserialize<_i9u6usup.Service>(e))
           .toList() as T;
+    }
+    if (t == Map<String, String>) {
+      return (data as Map).map((k, v) =>
+          MapEntry(deserialize<String>(k), deserialize<String>(v))) as T;
+    }
+    if (t == _is.getType<Map<String, String>?>()) {
+      return (data != null
+          ? (data as Map).map((k, v) =>
+              MapEntry(deserialize<String>(k), deserialize<String>(v)))
+          : null) as T;
     }
     try {
       return _i1n3uhu0.Protocol().deserialize<T>(data, t);

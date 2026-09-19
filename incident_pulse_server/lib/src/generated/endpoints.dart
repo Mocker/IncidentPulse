@@ -351,6 +351,11 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<String?>(),
               nullable: true,
             ),
+            'pingHeaders': _is.ParameterDescription(
+              name: 'pingHeaders',
+              type: _is.getType<Map<String, String>?>(),
+              nullable: true,
+            ),
             'checkIntervalSeconds': _is.ParameterDescription(
               name: 'checkIntervalSeconds',
               type: _is.getType<int>(),
@@ -386,11 +391,49 @@ class Endpoints extends _is.EndpointDispatch {
             name: params['name'],
             slug: params['slug'],
             pingUrl: params['pingUrl'],
+            pingHeaders: params['pingHeaders'],
             checkIntervalSeconds: params['checkIntervalSeconds'],
             isInternalOwner: params['isInternalOwner'],
             enableAiBridge: params['enableAiBridge'],
             dataRetentionDays: params['dataRetentionDays'],
             redactPii: params['redactPii'],
+          ),
+        ),
+        'updateServicePing': _is.MethodConnector(
+          name: 'updateServicePing',
+          params: {
+            'serviceId': _is.ParameterDescription(
+              name: 'serviceId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'pingUrl': _is.ParameterDescription(
+              name: 'pingUrl',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'pingHeaders': _is.ParameterDescription(
+              name: 'pingHeaders',
+              type: _is.getType<Map<String, String>?>(),
+              nullable: true,
+            ),
+            'checkIntervalSeconds': _is.ParameterDescription(
+              name: 'checkIntervalSeconds',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['service'] as _ihicv58o.ServiceEndpoint)
+                  .updateServicePing(
+            session,
+            serviceId: params['serviceId'],
+            pingUrl: params['pingUrl'],
+            pingHeaders: params['pingHeaders'],
+            checkIntervalSeconds: params['checkIntervalSeconds'],
           ),
         ),
         'updateServiceStatus': _is.MethodConnector(

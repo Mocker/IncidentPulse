@@ -10,6 +10,7 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:incident_pulse_server/src/generated/protocol.dart' as _iniyokuh;
 import 'package:serverpod/serverpod.dart' as _is;
 
 abstract class Service
@@ -20,6 +21,7 @@ abstract class Service
     required this.slug,
     required this.webhookKey,
     this.pingUrl,
+    this.pingHeaders,
     required this.status,
     required this.checkIntervalSeconds,
     this.lastPingAt,
@@ -37,6 +39,7 @@ abstract class Service
     required String slug,
     required String webhookKey,
     String? pingUrl,
+    Map<String, String>? pingHeaders,
     required String status,
     required int checkIntervalSeconds,
     DateTime? lastPingAt,
@@ -55,6 +58,10 @@ abstract class Service
       slug: jsonSerialization['slug'] as String,
       webhookKey: jsonSerialization['webhookKey'] as String,
       pingUrl: jsonSerialization['pingUrl'] as String?,
+      pingHeaders: jsonSerialization['pingHeaders'] == null
+          ? null
+          : _iniyokuh.Protocol().deserialize<Map<String, String>>(
+              jsonSerialization['pingHeaders']),
       status: jsonSerialization['status'] as String,
       checkIntervalSeconds: jsonSerialization['checkIntervalSeconds'] as int,
       lastPingAt: jsonSerialization['lastPingAt'] == null
@@ -87,6 +94,8 @@ abstract class Service
 
   String? pingUrl;
 
+  Map<String, String>? pingHeaders;
+
   String status;
 
   int checkIntervalSeconds;
@@ -117,6 +126,7 @@ abstract class Service
     String? slug,
     String? webhookKey,
     String? pingUrl,
+    Map<String, String>? pingHeaders,
     String? status,
     int? checkIntervalSeconds,
     DateTime? lastPingAt,
@@ -136,6 +146,7 @@ abstract class Service
       'slug': slug,
       'webhookKey': webhookKey,
       if (pingUrl != null) 'pingUrl': pingUrl,
+      if (pingHeaders != null) 'pingHeaders': pingHeaders?.toJson(),
       'status': status,
       'checkIntervalSeconds': checkIntervalSeconds,
       if (lastPingAt != null) 'lastPingAt': lastPingAt?.toJson(),
@@ -157,6 +168,7 @@ abstract class Service
       'slug': slug,
       'webhookKey': webhookKey,
       if (pingUrl != null) 'pingUrl': pingUrl,
+      if (pingHeaders != null) 'pingHeaders': pingHeaders?.toJson(),
       'status': status,
       'checkIntervalSeconds': checkIntervalSeconds,
       if (lastPingAt != null) 'lastPingAt': lastPingAt?.toJson(),
@@ -206,6 +218,7 @@ class _ServiceImpl extends Service {
     required String slug,
     required String webhookKey,
     String? pingUrl,
+    Map<String, String>? pingHeaders,
     required String status,
     required int checkIntervalSeconds,
     DateTime? lastPingAt,
@@ -221,6 +234,7 @@ class _ServiceImpl extends Service {
           slug: slug,
           webhookKey: webhookKey,
           pingUrl: pingUrl,
+          pingHeaders: pingHeaders,
           status: status,
           checkIntervalSeconds: checkIntervalSeconds,
           lastPingAt: lastPingAt,
@@ -242,6 +256,7 @@ class _ServiceImpl extends Service {
     String? slug,
     String? webhookKey,
     Object? pingUrl = _Undefined,
+    Object? pingHeaders = _Undefined,
     String? status,
     int? checkIntervalSeconds,
     Object? lastPingAt = _Undefined,
@@ -258,6 +273,16 @@ class _ServiceImpl extends Service {
       slug: slug ?? this.slug,
       webhookKey: webhookKey ?? this.webhookKey,
       pingUrl: pingUrl is String? ? pingUrl : this.pingUrl,
+      pingHeaders: pingHeaders is Map<String, String>?
+          ? pingHeaders
+          : this.pingHeaders?.map((
+                key0,
+                value0,
+              ) =>
+                  MapEntry(
+                    key0,
+                    value0,
+                  )),
       status: status ?? this.status,
       checkIntervalSeconds: checkIntervalSeconds ?? this.checkIntervalSeconds,
       lastPingAt: lastPingAt is DateTime? ? lastPingAt : this.lastPingAt,
@@ -292,6 +317,13 @@ class ServiceUpdateTable extends _is.UpdateTable<ServiceTable> {
 
   _is.ColumnValue<String, String> pingUrl(String? value) => _is.ColumnValue(
         table.pingUrl,
+        value,
+      );
+
+  _is.ColumnValue<Map<String, String>, Map<String, String>> pingHeaders(
+          Map<String, String>? value) =>
+      _is.ColumnValue(
+        table.pingHeaders,
         value,
       );
 
@@ -362,6 +394,10 @@ class ServiceTable extends _is.Table<int?> {
       'pingUrl',
       this,
     );
+    pingHeaders = _is.ColumnSerializable<Map<String, String>>(
+      'pingHeaders',
+      this,
+    );
     status = _is.ColumnString(
       'status',
       this,
@@ -410,6 +446,8 @@ class ServiceTable extends _is.Table<int?> {
 
   late final _is.ColumnString pingUrl;
 
+  late final _is.ColumnSerializable<Map<String, String>> pingHeaders;
+
   late final _is.ColumnString status;
 
   late final _is.ColumnInt checkIntervalSeconds;
@@ -435,6 +473,7 @@ class ServiceTable extends _is.Table<int?> {
         slug,
         webhookKey,
         pingUrl,
+        pingHeaders,
         status,
         checkIntervalSeconds,
         lastPingAt,

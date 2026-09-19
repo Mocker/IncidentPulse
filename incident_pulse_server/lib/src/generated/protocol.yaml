@@ -11,6 +11,7 @@ incident:
 service:
   - listServices:
   - createService:
+  - updateServicePing:
   - updateServiceStatus:
   - updatePrivacyAndRetention:
   - purgeServiceHistory:

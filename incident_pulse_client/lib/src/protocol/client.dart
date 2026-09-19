@@ -197,6 +197,7 @@ class EndpointService extends _isc.EndpointRef {
     required String name,
     required String slug,
     String? pingUrl,
+    Map<String, String>? pingHeaders,
     required int checkIntervalSeconds,
     required bool isInternalOwner,
     required bool enableAiBridge,
@@ -210,11 +211,30 @@ class EndpointService extends _isc.EndpointRef {
           'name': name,
           'slug': slug,
           'pingUrl': pingUrl,
+          'pingHeaders': pingHeaders,
           'checkIntervalSeconds': checkIntervalSeconds,
           'isInternalOwner': isInternalOwner,
           'enableAiBridge': enableAiBridge,
           'dataRetentionDays': dataRetentionDays,
           'redactPii': redactPii,
+        },
+      );
+
+  /// Updates synthetic health ping configuration (URL, headers, check interval)
+  _ida.Future<_icu7ot0t.Service?> updateServicePing({
+    required int serviceId,
+    String? pingUrl,
+    Map<String, String>? pingHeaders,
+    int? checkIntervalSeconds,
+  }) =>
+      caller.callServerEndpoint<_icu7ot0t.Service?>(
+        'service',
+        'updateServicePing',
+        {
+          'serviceId': serviceId,
+          'pingUrl': pingUrl,
+          'pingHeaders': pingHeaders,
+          'checkIntervalSeconds': checkIntervalSeconds,
         },
       );
 

@@ -10,6 +10,7 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:incident_pulse_client/src/protocol/protocol.dart' as _i7ndyoko;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 
 abstract class Service
@@ -20,6 +21,7 @@ abstract class Service
     required this.slug,
     required this.webhookKey,
     this.pingUrl,
+    this.pingHeaders,
     required this.status,
     required this.checkIntervalSeconds,
     this.lastPingAt,
@@ -37,6 +39,7 @@ abstract class Service
     required String slug,
     required String webhookKey,
     String? pingUrl,
+    Map<String, String>? pingHeaders,
     required String status,
     required int checkIntervalSeconds,
     DateTime? lastPingAt,
@@ -55,6 +58,10 @@ abstract class Service
       slug: jsonSerialization['slug'] as String,
       webhookKey: jsonSerialization['webhookKey'] as String,
       pingUrl: jsonSerialization['pingUrl'] as String?,
+      pingHeaders: jsonSerialization['pingHeaders'] == null
+          ? null
+          : _i7ndyoko.Protocol().deserialize<Map<String, String>>(
+              jsonSerialization['pingHeaders']),
       status: jsonSerialization['status'] as String,
       checkIntervalSeconds: jsonSerialization['checkIntervalSeconds'] as int,
       lastPingAt: jsonSerialization['lastPingAt'] == null
@@ -87,6 +94,8 @@ abstract class Service
 
   String? pingUrl;
 
+  Map<String, String>? pingHeaders;
+
   String status;
 
   int checkIntervalSeconds;
@@ -114,6 +123,7 @@ abstract class Service
     String? slug,
     String? webhookKey,
     String? pingUrl,
+    Map<String, String>? pingHeaders,
     String? status,
     int? checkIntervalSeconds,
     DateTime? lastPingAt,
@@ -133,6 +143,7 @@ abstract class Service
       'slug': slug,
       'webhookKey': webhookKey,
       if (pingUrl != null) 'pingUrl': pingUrl,
+      if (pingHeaders != null) 'pingHeaders': pingHeaders?.toJson(),
       'status': status,
       'checkIntervalSeconds': checkIntervalSeconds,
       if (lastPingAt != null) 'lastPingAt': lastPingAt?.toJson(),
@@ -154,6 +165,7 @@ abstract class Service
       'slug': slug,
       'webhookKey': webhookKey,
       if (pingUrl != null) 'pingUrl': pingUrl,
+      if (pingHeaders != null) 'pingHeaders': pingHeaders?.toJson(),
       'status': status,
       'checkIntervalSeconds': checkIntervalSeconds,
       if (lastPingAt != null) 'lastPingAt': lastPingAt?.toJson(),
@@ -181,6 +193,7 @@ class _ServiceImpl extends Service {
     required String slug,
     required String webhookKey,
     String? pingUrl,
+    Map<String, String>? pingHeaders,
     required String status,
     required int checkIntervalSeconds,
     DateTime? lastPingAt,
@@ -196,6 +209,7 @@ class _ServiceImpl extends Service {
           slug: slug,
           webhookKey: webhookKey,
           pingUrl: pingUrl,
+          pingHeaders: pingHeaders,
           status: status,
           checkIntervalSeconds: checkIntervalSeconds,
           lastPingAt: lastPingAt,
@@ -217,6 +231,7 @@ class _ServiceImpl extends Service {
     String? slug,
     String? webhookKey,
     Object? pingUrl = _Undefined,
+    Object? pingHeaders = _Undefined,
     String? status,
     int? checkIntervalSeconds,
     Object? lastPingAt = _Undefined,
@@ -233,6 +248,16 @@ class _ServiceImpl extends Service {
       slug: slug ?? this.slug,
       webhookKey: webhookKey ?? this.webhookKey,
       pingUrl: pingUrl is String? ? pingUrl : this.pingUrl,
+      pingHeaders: pingHeaders is Map<String, String>?
+          ? pingHeaders
+          : this.pingHeaders?.map((
+                key0,
+                value0,
+              ) =>
+                  MapEntry(
+                    key0,
+                    value0,
+                  )),
       status: status ?? this.status,
       checkIntervalSeconds: checkIntervalSeconds ?? this.checkIntervalSeconds,
       lastPingAt: lastPingAt is DateTime? ? lastPingAt : this.lastPingAt,

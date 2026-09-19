@@ -12,28 +12,44 @@ class ServiceManagementScreen extends StatefulWidget {
 class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
   final _nameController = TextEditingController();
   final _pingUrlController = TextEditingController();
+  final _pingHeadersController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _pingUrlController.dispose();
+    _pingHeadersController.dispose();
+    super.dispose();
+  }
 
   final List<Map<String, dynamic>> _services = [
     {
       'id': 1,
-      'name': 'They Might Byte (Game Server)',
-      'slug': 'they-might-byte',
-      'webhookUrl': 'http://localhost:8080/v1/webhook?key=tmb_sec_9918274a7b',
+      'name': 'Ryan Guthrie Portfolio',
+      'slug': 'ryan-portfolio',
+      'webhookUrl': 'http://localhost:8080/v1/webhook?key=whk_seed_ryan_portfolio',
+      'pingUrl': 'https://ryanguthrie.com',
+      'pingHeaders': null,
       'status': 'operational',
       'isInternalOwner': true,
       'enableAiBridge': true, // Internal project
-      'retentionDays': 90,
+      'retentionDays': 365,
       'redactPii': true,
     },
     {
       'id': 2,
-      'name': 'Billing Gateway & Webhooks',
-      'slug': 'billing-gateway',
-      'webhookUrl': 'http://localhost:8080/v1/webhook?key=bill_sec_332148bb1',
+      'name': 'n8n Automation Hub',
+      'slug': 'n8n-hub',
+      'webhookUrl': 'http://localhost:8080/v1/webhook?key=whk_seed_n8n_hub',
+      'pingUrl': 'https://n8n.ryanguthrie.com/healthz',
+      'pingHeaders': {
+        'CF-Access-Client-Id': '••••••••.access',
+        'CF-Access-Client-Secret': '••••••••••••••••',
+      },
       'status': 'operational',
       'isInternalOwner': true,
       'enableAiBridge': true, // Internal project
-      'retentionDays': 180,
+      'retentionDays': 365,
       'redactPii': true,
     },
     {
@@ -41,6 +57,8 @@ class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
       'name': 'Acme Corp Micro-SaaS (Customer)',
       'slug': 'acme-corp',
       'webhookUrl': 'http://localhost:8080/v1/webhook?key=acme_sec_884129cc0',
+      'pingUrl': 'https://api.acmecorp.com/health',
+      'pingHeaders': null,
       'status': 'degraded',
       'isInternalOwner': false,
       'enableAiBridge': false, // External customer: strictly off by default
@@ -121,8 +139,8 @@ class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
                 Chip(
                   label: Text((s['status'] as String).toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                   backgroundColor: s['status'] == 'operational'
-                      ? IncidentTheme.statusOperational.withOpacity(0.2)
-                      : IncidentTheme.statusDegraded.withOpacity(0.2),
+                      ? IncidentTheme.statusOperational.withValues(alpha: 0.2)
+                      : IncidentTheme.statusDegraded.withValues(alpha: 0.2),
                   side: BorderSide(
                     color: s['status'] == 'operational' ? IncidentTheme.statusOperational : IncidentTheme.statusDegraded,
                   ),
@@ -163,6 +181,52 @@ class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
                 ],
               ),
             ),
+
+            if (s['pingUrl'] != null && (s['pingUrl'] as String).isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Text('Synthetic Health Probe Target:', style: TextStyle(color: Colors.white38, fontSize: 11)),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF090D16),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: IncidentTheme.surfaceBorder),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.radar, size: 15, color: IncidentTheme.aiAccent),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        s['pingUrl'] as String,
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.white70),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (s['pingHeaders'] != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.shield_outlined, size: 11, color: Colors.amberAccent),
+                            SizedBox(width: 4),
+                            Text(
+                              'Zero Trust Headers',
+                              style: TextStyle(fontSize: 10, color: Colors.amberAccent, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
 
             // Privacy, Opt-In & Compliance Controls
@@ -171,7 +235,7 @@ class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF0F1524),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: IncidentTheme.surfaceBorder.withOpacity(0.6)),
+                border: Border.all(color: IncidentTheme.surfaceBorder.withValues(alpha: 0.6)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +268,7 @@ class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
                       ),
                       Switch(
                         value: isAiEnabled,
-                        activeColor: IncidentTheme.aiAccent,
+                        activeThumbColor: IncidentTheme.aiAccent,
                         onChanged: (val) {
                           setState(() {
                             s['enableAiBridge'] = val;
@@ -325,72 +389,110 @@ class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: IncidentTheme.surface,
           title: const Text('Register New Service', style: TextStyle(color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: _nameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Service / Micro-SaaS Name',
-                  hintText: 'e.g. Acme Billing API',
-                  border: OutlineInputBorder(),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _nameController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Service / Micro-SaaS Name',
+                    hintText: 'e.g. Acme Billing API',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _pingUrlController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Synthetic Health Ping URL (Optional)',
-                  hintText: 'https://api.acme.com/health',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _pingUrlController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Synthetic Health Ping URL (Optional)',
+                    hintText: 'https://api.acme.com/health',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14),
-              const Text('Data Retention Window:', style: TextStyle(color: Colors.white70, fontSize: 12)),
-              DropdownButton<int>(
-                value: retentionDays,
-                dropdownColor: IncidentTheme.surface,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                isExpanded: true,
-                items: const [
-                  DropdownMenuItem(value: 30, child: Text('30 Days (Strict GDPR)')),
-                  DropdownMenuItem(value: 90, child: Text('90 Days (Standard)')),
-                  DropdownMenuItem(value: 180, child: Text('180 Days')),
-                  DropdownMenuItem(value: 365, child: Text('365 Days (SOC2)')),
-                ],
-                onChanged: (val) {
-                  if (val != null) setDialogState(() => retentionDays = val);
-                },
-              ),
-              const SizedBox(height: 8),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                activeColor: IncidentTheme.aiAccent,
-                title: const Text('AI Telemetry Bridge (Autonomous Diagnosis)', style: TextStyle(fontSize: 12, color: Colors.white)),
-                subtitle: const Text('Off by default for third-party customer privacy', style: TextStyle(fontSize: 10.5, color: Colors.white38)),
-                value: isAiOptIn,
-                onChanged: (val) => setDialogState(() => isAiOptIn = val ?? false),
-              ),
-            ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _pingHeadersController,
+                  style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 12),
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Custom Ping Headers (Optional)',
+                    hintText: 'CF-Access-Client-Id: xxx\nCF-Access-Client-Secret: yyy',
+                    helperText: 'Key: Value per line (e.g. Cloudflare Zero Trust service tokens)',
+                    helperStyle: TextStyle(fontSize: 10.5, color: Colors.white38),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text('Data Retention Window:', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                DropdownButton<int>(
+                  value: retentionDays,
+                  dropdownColor: IncidentTheme.surface,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  isExpanded: true,
+                  items: const [
+                    DropdownMenuItem(value: 30, child: Text('30 Days (Strict GDPR)')),
+                    DropdownMenuItem(value: 90, child: Text('90 Days (Standard)')),
+                    DropdownMenuItem(value: 180, child: Text('180 Days')),
+                    DropdownMenuItem(value: 365, child: Text('365 Days (SOC2)')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setDialogState(() => retentionDays = val);
+                  },
+                ),
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  activeColor: IncidentTheme.aiAccent,
+                  title: const Text('AI Telemetry Bridge (Autonomous Diagnosis)', style: TextStyle(fontSize: 12, color: Colors.white)),
+                  subtitle: const Text('Off by default for third-party customer privacy', style: TextStyle(fontSize: 10.5, color: Colors.white38)),
+                  value: isAiOptIn,
+                  onChanged: (val) => setDialogState(() => isAiOptIn = val ?? false),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                _nameController.clear();
+                _pingUrlController.clear();
+                _pingHeadersController.clear();
+                Navigator.pop(context);
+              },
               child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: IncidentTheme.aiAccent),
               onPressed: () {
                 if (_nameController.text.isNotEmpty) {
+                  Map<String, String>? parsedHeaders;
+                  if (_pingHeadersController.text.trim().isNotEmpty) {
+                    parsedHeaders = {};
+                    for (final line in _pingHeadersController.text.trim().split('\n')) {
+                      final idx = line.indexOf(':');
+                      if (idx > 0) {
+                        final key = line.substring(0, idx).trim();
+                        final val = line.substring(idx + 1).trim();
+                        if (key.isNotEmpty && val.isNotEmpty) {
+                          parsedHeaders[key] = val;
+                        }
+                      }
+                    }
+                    if (parsedHeaders.isEmpty) parsedHeaders = null;
+                  }
+
                   setState(() {
                     _services.add({
                       'id': _services.length + 1,
                       'name': _nameController.text.trim(),
                       'slug': _nameController.text.trim().toLowerCase().replaceAll(' ', '-'),
                       'webhookUrl': 'http://localhost:8080/v1/webhook?key=sec_${DateTime.now().millisecondsSinceEpoch}',
+                      'pingUrl': _pingUrlController.text.trim().isNotEmpty ? _pingUrlController.text.trim() : null,
+                      'pingHeaders': parsedHeaders,
                       'status': 'operational',
                       'isInternalOwner': false,
                       'enableAiBridge': isAiOptIn,
@@ -400,6 +502,7 @@ class _ServiceManagementScreenState extends State<ServiceManagementScreen> {
                   });
                   _nameController.clear();
                   _pingUrlController.clear();
+                  _pingHeadersController.clear();
                   Navigator.pop(context);
                 }
               },

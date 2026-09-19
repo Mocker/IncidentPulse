@@ -5,6 +5,7 @@ fields:
   slug: String
   webhookKey: String
   pingUrl: String?
+  pingHeaders: Map<String, String>? # Custom headers (e.g. CF-Access-Client-Id, CF-Access-Client-Secret, Authorization)
   status: String # operational, degraded, down, maintenance
   checkIntervalSeconds: int
   lastPingAt: DateTime?

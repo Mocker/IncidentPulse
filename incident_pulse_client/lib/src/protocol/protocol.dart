@@ -94,6 +94,16 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_i70zm44a.Service?>()) {
       return (data != null ? _i70zm44a.Service.fromJson(data) : null) as T;
     }
+    if (t == Map<String, String>) {
+      return (data as Map).map((k, v) =>
+          MapEntry(deserialize<String>(k), deserialize<String>(v))) as T;
+    }
+    if (t == _isc.getType<Map<String, String>?>()) {
+      return (data != null
+          ? (data as Map).map((k, v) =>
+              MapEntry(deserialize<String>(k), deserialize<String>(v)))
+          : null) as T;
+    }
     if (t == Map<String, dynamic>) {
       return (data as Map).map((k, v) =>
           MapEntry(deserialize<String>(k), deserialize<dynamic>(v))) as T;
@@ -110,6 +120,16 @@ class Protocol extends _isc.SerializationManager {
       return (data as List)
           .map((e) => deserialize<_icu7ot0t.Service>(e))
           .toList() as T;
+    }
+    if (t == Map<String, String>) {
+      return (data as Map).map((k, v) =>
+          MapEntry(deserialize<String>(k), deserialize<String>(v))) as T;
+    }
+    if (t == _isc.getType<Map<String, String>?>()) {
+      return (data != null
+          ? (data as Map).map((k, v) =>
+              MapEntry(deserialize<String>(k), deserialize<String>(v)))
+          : null) as T;
     }
     try {
       return _i312scxx.Protocol().deserialize<T>(data, t);

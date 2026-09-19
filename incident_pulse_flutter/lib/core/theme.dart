@@ -16,7 +16,7 @@ class IncidentTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: background,
       primaryColor: aiAccent,
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         color: surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -38,7 +38,6 @@ class IncidentTheme {
       colorScheme: const ColorScheme.dark(
         primary: aiAccent,
         surface: surface,
-        background: background,
       ),
     );
   }

@@ -13,12 +13,23 @@ class HealthProbeFutureCall extends FutureCall {
 
     final now = DateTime.now();
     try {
-      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      final headers = <String, String>{
+        'User-Agent': 'IncidentPulse-UptimeProbe/1.0',
+        if (service.pingHeaders != null) ...service.pingHeaders!,
+      };
 
-      final isOk = response.statusCode >= 200 && response.statusCode < 400;
+      final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 10));
+
+      // Detect if intercepted by Cloudflare Access login redirect or unauthorized
+      final isCloudflareLogin = (response.isRedirect &&
+              (response.headers['location']?.contains('cloudflareaccess.com') ?? false)) ||
+          (response.request?.url.host.contains('cloudflareaccess.com') ?? false) ||
+          (response.body.contains('cloudflareaccess.com') && response.body.contains('cdn-cgi/access'));
+
+      final isOk = !isCloudflareLogin && response.statusCode >= 200 && response.statusCode < 400;
       final updated = service.copyWith(
         lastPingAt: now,
-        lastPingStatus: response.statusCode,
+        lastPingStatus: isCloudflareLogin ? 401 : response.statusCode,
         status: isOk ? 'operational' : 'degraded',
       );
       await Service.db.updateRow(session, updated);

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:serverpod/serverpod.dart';
 import 'src/generated/protocol.dart';
 import 'src/generated/endpoints.dart';
@@ -45,7 +46,23 @@ Future<void> _seedBaselineServices(Serverpod pod) async {
       session.log('Seeded baseline service: Ryan Guthrie Portfolio (https://ryanguthrie.com)');
     }
 
-    if (!existingSlugs.contains('n8n-hub')) {
+    // Cloudflare Zero Trust Service Token credentials for n8n
+    final cfId = session.passwords['CF_ACCESS_CLIENT_ID'] ??
+        Platform.environment['CF_ACCESS_CLIENT_ID'];
+    final cfSecret = session.passwords['CF_ACCESS_CLIENT_SECRET'] ??
+        Platform.environment['CF_ACCESS_CLIENT_SECRET'];
+
+    final cfHeaders = (cfId != null && cfSecret != null && cfId.isNotEmpty && cfSecret.isNotEmpty)
+        ? {
+            'CF-Access-Client-Id': cfId,
+            'CF-Access-Client-Secret': cfSecret,
+          }
+        : null;
+
+    final n8nMatches = existing.where((s) => s.slug == 'n8n-hub');
+    final n8nService = n8nMatches.isNotEmpty ? n8nMatches.first : null;
+
+    if (n8nService == null) {
       await Service.db.insertRow(
         session,
         Service(
@@ -53,6 +70,7 @@ Future<void> _seedBaselineServices(Serverpod pod) async {
           slug: 'n8n-hub',
           webhookKey: 'whk_seed_n8n_hub_${now.millisecondsSinceEpoch}',
           pingUrl: 'https://n8n.ryanguthrie.com',
+          pingHeaders: cfHeaders,
           status: 'operational',
           checkIntervalSeconds: 60,
           isInternalOwner: true,
@@ -63,6 +81,10 @@ Future<void> _seedBaselineServices(Serverpod pod) async {
         ),
       );
       session.log('Seeded baseline service: n8n Automation Hub (https://n8n.ryanguthrie.com)');
+    } else if (cfHeaders != null && (n8nService.pingHeaders == null || n8nService.pingHeaders!.isEmpty)) {
+      final updated = n8nService.copyWith(pingHeaders: cfHeaders);
+      await Service.db.updateRow(session, updated);
+      session.log('Updated n8n Automation Hub with Cloudflare Access Service Token headers');
     }
   } catch (e) {
     session.log('Baseline service seed notice: $e', level: LogLevel.info);

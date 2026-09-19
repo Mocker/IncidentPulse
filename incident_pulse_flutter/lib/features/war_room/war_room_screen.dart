@@ -133,7 +133,7 @@ class _WarRoomScreenState extends State<WarRoomScreen> {
       color: isAi ? const Color(0xFF1E1730) : IncidentTheme.surface,
       shape: RoundedRectangleBorder(
         side: BorderSide(
-          color: isAi ? IncidentTheme.aiAccent.withOpacity(0.4) : IncidentTheme.surfaceBorder,
+          color: isAi ? IncidentTheme.aiAccent.withValues(alpha: 0.4) : IncidentTheme.surfaceBorder,
           width: 1,
         ),
         borderRadius: BorderRadius.circular(10),

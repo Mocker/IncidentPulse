@@ -22,6 +22,7 @@ class ServiceEndpoint extends Endpoint {
     required String name,
     required String slug,
     String? pingUrl,
+    Map<String, String>? pingHeaders,
     int checkIntervalSeconds = 60,
     bool isInternalOwner = false,
     bool enableAiBridge = false,
@@ -36,6 +37,7 @@ class ServiceEndpoint extends Endpoint {
       slug: slug.toLowerCase().replaceAll(' ', '-'),
       webhookKey: webhookKey,
       pingUrl: pingUrl,
+      pingHeaders: pingHeaders,
       status: 'operational',
       checkIntervalSeconds: checkIntervalSeconds,
       isInternalOwner: isInternalOwner,
@@ -46,6 +48,25 @@ class ServiceEndpoint extends Endpoint {
     );
 
     return await Service.db.insertRow(session, service);
+  }
+
+  /// Updates synthetic health ping configuration (URL, headers, check interval)
+  Future<Service?> updateServicePing(
+    Session session, {
+    required int serviceId,
+    String? pingUrl,
+    Map<String, String>? pingHeaders,
+    int? checkIntervalSeconds,
+  }) async {
+    final service = await Service.db.findById(session, serviceId);
+    if (service == null) return null;
+
+    final updated = service.copyWith(
+      pingUrl: pingUrl ?? service.pingUrl,
+      pingHeaders: pingHeaders ?? service.pingHeaders,
+      checkIntervalSeconds: checkIntervalSeconds ?? service.checkIntervalSeconds,
+    );
+    return await Service.db.updateRow(session, updated);
   }
 
   /// Updates status of a service

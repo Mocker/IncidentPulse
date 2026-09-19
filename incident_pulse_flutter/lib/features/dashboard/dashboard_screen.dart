@@ -152,7 +152,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: IncidentTheme.statusCritical.withOpacity(0.2),
+                color: IncidentTheme.statusCritical.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.warning_amber_rounded, color: IncidentTheme.statusCritical, size: 28),
@@ -239,7 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: statusColor.withOpacity(0.5),
+                        color: statusColor.withValues(alpha: 0.5),
                         blurRadius: 6,
                       ),
                     ],
