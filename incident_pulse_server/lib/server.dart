@@ -86,6 +86,36 @@ Future<void> _seedBaselineServices(Serverpod pod) async {
       await Service.db.updateRow(session, updated);
       session.log('Updated n8n Automation Hub with Cloudflare Access Service Token headers');
     }
+
+    // Seed outbound Discord webhook subscription if configured
+    final discordUrl = session.passwords['DISCORD_WEBHOOK_URL'] ??
+        Platform.environment['DISCORD_WEBHOOK_URL'];
+
+    if (discordUrl != null && discordUrl.isNotEmpty) {
+      final existingHooks = await WebhookSubscription.db.find(
+        session,
+        where: (t) => t.targetUrl.equals(discordUrl),
+      );
+      if (existingHooks.isEmpty) {
+        await WebhookSubscription.db.insertRow(
+          session,
+          WebhookSubscription(
+            name: 'Discord Ops Alerts',
+            targetUrl: discordUrl,
+            serviceId: null, // Global alerts for all services
+            events: [
+              'incident.triggered',
+              'incident.acknowledged',
+              'incident.escalated',
+              'incident.resolved',
+            ],
+            isActive: true,
+            createdAt: now,
+          ),
+        );
+        session.log('Seeded baseline Discord outbound webhook subscription');
+      }
+    }
   } catch (e) {
     session.log('Baseline service seed notice: $e', level: LogLevel.info);
   } finally {
