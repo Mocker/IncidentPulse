@@ -85,15 +85,72 @@ class WebhookDispatcher {
         if (sub.customHeaders != null) ...sub.customHeaders!,
       };
 
+      String bodyToSend = jsonBody;
+
+      // Native adapter for Discord incoming webhooks
+      if (uri.host.contains('discord.com')) {
+        final dynamic data = jsonDecode(jsonBody);
+        final ev = data['event'] as String? ?? 'incident.event';
+        final inc = data['incident'] as Map<String, dynamic>? ?? {};
+        final srv = data['service'] as Map<String, dynamic>? ?? {};
+        final links = data['links'] as Map<String, dynamic>? ?? {};
+
+        final title = inc['title'] as String? ?? 'Incident Notification';
+        final severity = (inc['severity'] as String? ?? 'INFO').toUpperCase();
+        final status = inc['status'] as String? ?? 'triggered';
+        final srvName = srv['name'] as String? ?? 'Service';
+        final warRoom = links['warRoomUrl'] as String? ?? '';
+
+        int embedColor = 0xF59E0B; // Amber
+        String emoji = '⚠️';
+        if (severity == 'CRITICAL' || severity == 'HIGH' || status == 'triggered') {
+          embedColor = 0xEF4444; // Red
+          emoji = '🚨';
+        }
+        if (status == 'acknowledged') {
+          embedColor = 0x3B82F6; // Blue
+          emoji = '👁️';
+        } else if (status == 'resolved') {
+          embedColor = 0x10B981; // Green
+          emoji = '✅';
+        } else if (status == 'escalated') {
+          embedColor = 0xDC2626; // Deep Crimson
+          emoji = '🔥';
+        }
+
+        final discordPayload = {
+          'content': '$emoji **[$severity] $srvName** — $title',
+          'embeds': [
+            {
+              'title': '$emoji Incident #${inc['id']}: $title',
+              'description': inc['description'] as String? ?? 'No description provided.',
+              'color': embedColor,
+              'fields': [
+                {'name': 'Service', 'value': srvName, 'inline': true},
+                {'name': 'Status', 'value': status.toUpperCase(), 'inline': true},
+                {'name': 'Severity', 'value': severity, 'inline': true},
+                if (inc['rootCause'] != null && inc['rootCause'].toString().isNotEmpty)
+                  {'name': 'Root Cause', 'value': inc['rootCause'].toString(), 'inline': false},
+              ],
+              if (warRoom.isNotEmpty) 'url': warRoom,
+              'footer': {
+                'text': 'IncidentPulse • $ev • ${data['timestamp']}',
+              },
+            }
+          ],
+        };
+        bodyToSend = jsonEncode(discordPayload);
+      }
+
       // Compute HMAC-SHA256 signature if a secret key is configured
       if (sub.secretKey != null && sub.secretKey!.isNotEmpty) {
         final hmac = Hmac(sha256, utf8.encode(sub.secretKey!));
-        final signature = hmac.convert(utf8.encode(jsonBody));
+        final signature = hmac.convert(utf8.encode(bodyToSend));
         headers['X-IncidentPulse-Signature'] = 'sha256=$signature';
       }
 
       final response = await http
-          .post(uri, headers: headers, body: jsonBody)
+          .post(uri, headers: headers, body: bodyToSend)
           .timeout(const Duration(seconds: 5));
 
       session.log(
