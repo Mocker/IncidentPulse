@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:incident_pulse_client/incident_pulse_client.dart';
+import '../../core/client.dart';
 import '../../core/theme.dart';
 import '../war_room/war_room_screen.dart';
 
@@ -10,44 +12,56 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // Mock/initial data for immediate preview and testing
-  final List<Map<String, dynamic>> _services = [
-    {
-      'id': 1,
-      'name': 'They Might Byte (Game Server)',
-      'slug': 'they-might-byte',
-      'status': 'operational',
-      'uptime': '99.98%',
-      'latency': '42ms',
-    },
-    {
-      'id': 2,
-      'name': 'Billing Gateway & Webhooks',
-      'slug': 'billing-gateway',
-      'status': 'operational',
-      'uptime': '100.0%',
-      'latency': '18ms',
-    },
-    {
-      'id': 3,
-      'name': 'Stripe Checkout Ingress',
-      'slug': 'stripe-webhooks',
-      'status': 'degraded',
-      'uptime': '98.5%',
-      'latency': '310ms',
-    },
-  ];
+  List<Service> _services = [];
+  List<Incident> _activeIncidents = [];
+  bool _loading = true;
+  String? _error;
 
-  final List<Map<String, dynamic>> _activeIncidents = [
-    {
-      'id': 101,
-      'service': 'Stripe Checkout Ingress',
-      'title': 'Stripe Webhook Signature Verification Failures',
-      'severity': 'high',
-      'status': 'triggered',
-      'elapsed': '4m ago',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final results = await Future.wait([
+        client.service.listServices(),
+        client.incident.getActiveIncidents(),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _services = (results[0] as List<Service>);
+        _activeIncidents = (results[1] as List<Incident>);
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Could not reach the IncidentPulse server.\n$e';
+      });
+    }
+  }
+
+  String _serviceName(int serviceId) {
+    for (final s in _services) {
+      if (s.id == serviceId) return s.name;
+    }
+    return 'Service #$serviceId';
+  }
+
+  String _elapsed(DateTime t) {
+    final d = DateTime.now().difference(t.toLocal());
+    if (d.inMinutes < 1) return 'just now';
+    if (d.inMinutes < 60) return '${d.inMinutes}m ago';
+    if (d.inHours < 24) return '${d.inHours}h ago';
+    return '${d.inDays}d ago';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,11 +84,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh Status',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Refreshed health metrics across all services.')),
-              );
-            },
+            onPressed: _loadData,
           ),
           IconButton(
             icon: const Icon(Icons.auto_awesome, color: IncidentTheme.aiAccent),
@@ -83,28 +93,98 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: IncidentTheme.aiAccent),
+            SizedBox(height: 12),
+            Text('Connecting to IncidentPulse server…',
+                style: TextStyle(color: Colors.white54, fontSize: 13)),
+          ],
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off_outlined, color: Colors.white38, size: 48),
+              const SizedBox(height: 16),
+              Text(_error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5)),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: IncidentTheme.aiAccent),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Retry Connection'),
+                onPressed: _loadData,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      color: IncidentTheme.aiAccent,
+      onRefresh: _loadData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Active Incidents Banner
-            if (_activeIncidents.isNotEmpty) ...[
-              const Text(
-                'ACTIVE ALERTS & WAR ROOMS',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: IncidentTheme.statusCritical,
-                  letterSpacing: 1.2,
-                ),
+            const Text(
+              'ACTIVE ALERTS & WAR ROOMS',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: IncidentTheme.statusCritical,
+                letterSpacing: 1.2,
               ),
-              const SizedBox(height: 10),
+            ),
+            const SizedBox(height: 10),
+            if (_activeIncidents.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: IncidentTheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: IncidentTheme.surfaceBorder),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.check_circle_outline,
+                        color: IncidentTheme.statusOperational, size: 28),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'All quiet. No active incidents across monitored services.',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
               ..._activeIncidents.map((inc) => _buildIncidentCard(inc)),
-              const SizedBox(height: 24),
-            ],
+            const SizedBox(height: 24),
 
-            // Monitored Ventures Matrix
+            // Monitored Services Matrix
             const Text(
               'MONITORED SERVICES & APIS',
               style: TextStyle(
@@ -115,34 +195,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth > 700;
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: isWide ? 3 : 1,
-                    crossAxisSpacing: 14,
-                    mainAxisSpacing: 14,
-                    mainAxisExtent: 140,
-                  ),
-                  itemCount: _services.length,
-                  itemBuilder: (context, index) => _buildServiceCard(_services[index]),
-                );
-              },
-            ),
+            if (_services.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: IncidentTheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: IncidentTheme.surfaceBorder),
+                ),
+                child: const Text(
+                  'No services registered yet. Add one from the Services tab.',
+                  style: TextStyle(color: Colors.white38, fontSize: 13),
+                ),
+              )
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth > 700;
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isWide ? 3 : 1,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                      mainAxisExtent: 140,
+                    ),
+                    itemCount: _services.length,
+                    itemBuilder: (context, index) =>
+                        _buildServiceCard(_services[index]),
+                  );
+                },
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildIncidentCard(Map<String, dynamic> inc) {
+  Widget _buildIncidentCard(Incident inc) {
+    final isCritical = inc.severity == 'critical';
+    final accent =
+        isCritical ? IncidentTheme.statusCritical : const Color(0xFFF59E0B);
+
     return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       color: const Color(0xFF261217),
       shape: RoundedRectangleBorder(
-        side: const BorderSide(color: IncidentTheme.statusCritical, width: 1.5),
+        side: BorderSide(color: accent, width: 1.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
@@ -152,10 +253,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: IncidentTheme.statusCritical.withValues(alpha: 0.2),
+                color: accent.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.warning_amber_rounded, color: IncidentTheme.statusCritical, size: 28),
+              child: Icon(Icons.warning_amber_rounded, color: accent, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -165,32 +266,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: IncidentTheme.statusCritical,
+                          color: accent,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          inc['severity'].toString().toUpperCase(),
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                          inc.severity.toUpperCase(),
+                          style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        inc['service'],
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      Expanded(
+                        child: Text(
+                          _serviceName(inc.serviceId),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      const Spacer(),
                       Text(
-                        inc['elapsed'],
-                        style: const TextStyle(color: Colors.white38, fontSize: 12),
+                        _elapsed(inc.triggeredAt),
+                        style: const TextStyle(
+                            color: Colors.white38, fontSize: 12),
                       ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    inc['title'],
-                    style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                    inc.title,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Status: ${inc.status} • Source: ${inc.source}',
+                    style:
+                        const TextStyle(color: Colors.white38, fontSize: 12),
                   ),
                 ],
               ),
@@ -198,7 +316,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 16),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: IncidentTheme.statusCritical,
+                backgroundColor: accent,
                 foregroundColor: Colors.white,
               ),
               icon: const Icon(Icons.meeting_room_rounded, size: 18),
@@ -207,9 +325,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => WarRoomScreen(incidentId: inc['id']),
+                    builder: (context) => WarRoomScreen(
+                      incident: inc,
+                      serviceName: _serviceName(inc.serviceId),
+                    ),
                   ),
-                );
+                ).then((_) => _loadData());
               },
             ),
           ],
@@ -218,9 +339,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildServiceCard(Map<String, dynamic> service) {
-    final isOk = service['status'] == 'operational';
-    final statusColor = isOk ? IncidentTheme.statusOperational : IncidentTheme.statusDegraded;
+  Widget _buildServiceCard(Service service) {
+    final status = service.status;
+    final statusColor = status == 'operational'
+        ? IncidentTheme.statusOperational
+        : status == 'degraded'
+            ? IncidentTheme.statusDegraded
+            : IncidentTheme.statusCritical;
+
+    String probeLine;
+    if (service.lastPingAt != null) {
+      final code = service.lastPingStatus != null
+          ? 'HTTP ${service.lastPingStatus}'
+          : 'no response';
+      probeLine = 'Last probe ${_elapsed(service.lastPingAt!)} • $code';
+    } else {
+      probeLine = service.pingUrl != null
+          ? 'Probe scheduled • ${service.pingUrl}'
+          : 'No health probe configured';
+    }
 
     return Card(
       child: Padding(
@@ -248,31 +385,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    service['name'],
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                    service.name,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                Text(
+                  status.toUpperCase(),
+                  style: TextStyle(
+                      color: statusColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold),
+                ),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Uptime', style: TextStyle(color: Colors.white38, fontSize: 11)),
-                    Text(service['uptime'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text('Latency', style: TextStyle(color: Colors.white38, fontSize: 11)),
-                    Text(service['latency'], style: TextStyle(color: statusColor, fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ],
+            Text(
+              probeLine,
+              style: const TextStyle(color: Colors.white38, fontSize: 11.5),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ],
         ),
@@ -280,7 +414,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _showAiBriefing() {
+  Future<void> _showAiBriefing() async {
+    Map<String, dynamic>? summary;
+    try {
+      summary = await client.aiTelemetry.getTelemetrySummary();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('AI briefing unavailable: $e')),
+      );
+      return;
+    }
+    if (!mounted) return;
+
+    final operational = summary['operationalCount'] ?? 0;
+    final degraded = summary['degradedCount'] ?? 0;
+    final down = summary['downCount'] ?? 0;
+    final active = summary['activeIncidentCount'] ?? 0;
+    final critical = (summary['criticalIncidents'] as List?) ?? [];
+
     showModalBottomSheet(
       context: context,
       backgroundColor: IncidentTheme.surface,
@@ -299,24 +451,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 SizedBox(width: 10),
                 Text(
                   'AI Assistant Reliability Briefing',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
-              '• 2 of 3 services are fully operational.\n'
-              '• 1 degraded service detected: Stripe webhook signature mismatches in the last 15 minutes.\n'
-              '• Automated action: Diagnostic stacktrace attached in the War Room.\n'
-              '• Data Privacy: Customer data isolation active. AI telemetry opt-in enforced.',
-              style: TextStyle(color: Colors.white70, height: 1.5, fontSize: 13),
+            Text(
+              '• $operational operational, $degraded degraded, $down down.\n'
+              '• $active active incident${active == 1 ? '' : 's'} across opted-in services.\n'
+              '${critical.isEmpty ? '• No critical incidents right now.' : '• ${critical.length} CRITICAL incident${critical.length == 1 ? '' : 's'} need attention.'}\n'
+              '• Data Privacy: customer data isolation active. AI telemetry opt-in enforced.',
+              style: const TextStyle(
+                  color: Colors.white70, height: 1.5, fontSize: 13),
             ),
             const SizedBox(height: 20),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Dismiss', style: TextStyle(color: IncidentTheme.aiAccent)),
+                child: const Text('Dismiss',
+                    style: TextStyle(color: IncidentTheme.aiAccent)),
               ),
             ),
           ],
