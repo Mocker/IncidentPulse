@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'core/client.dart';
 import 'core/theme.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/services/service_management_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Point the app at a deployed backend with:
+  //   flutter run -d chrome --dart-define=SERVER_URL=https://<your-serverpod-host>/
+  // Defaults to localhost for local development.
+  const serverUrl = String.fromEnvironment('SERVER_URL');
+  initServerpodClient(serverUrl: serverUrl.isEmpty ? null : serverUrl);
+
   runApp(const IncidentPulseApp());
 }
 
