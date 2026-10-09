@@ -3,6 +3,8 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../generated/future_calls.dart';
 
+import '../services/pii_sanitizer.dart';
+
 class WebhookEndpoint extends Endpoint {
   /// Public webhook ingress endpoint.
   /// Authenticates using the service's webhookKey, applies PII redaction,
@@ -27,7 +29,7 @@ class WebhookEndpoint extends Endpoint {
     // 2. Sanitize and redact PII if enabled on service
     String processedPayload = rawPayloadJson;
     if (service.redactPii) {
-      processedPayload = _redactSensitiveData(rawPayloadJson);
+      processedPayload = PiiSanitizer.redact(rawPayloadJson);
     }
 
     // 3. Parse payload based on source
@@ -121,36 +123,5 @@ class WebhookEndpoint extends Endpoint {
     }
 
     return true;
-  }
-
-  /// Scrubs authorization headers, bearer tokens, credit cards, and emails
-  String _redactSensitiveData(String input) {
-    String text = input;
-
-    // Redact Authorization headers / bearer tokens
-    text = text.replaceAll(
-      RegExp(r'(?i)(bearer\s+[a-z0-9_\-\.]+)', caseSensitive: false),
-      'Bearer [REDACTED_TOKEN]',
-    );
-
-    // Redact API keys / secrets (whsec_, sk_live_, etc.)
-    text = text.replaceAll(
-      RegExp(r'(whsec_[a-zA-Z0-9]+|sk_live_[a-zA-Z0-9]+|sk_test_[a-zA-Z0-9]+)'),
-      '[REDACTED_SECRET]',
-    );
-
-    // Redact email addresses
-    text = text.replaceAll(
-      RegExp(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'),
-      '[REDACTED_EMAIL]',
-    );
-
-    // Redact 16-digit credit card patterns
-    text = text.replaceAll(
-      RegExp(r'\b(?:\d[ -]*?){13,16}\b'),
-      '[REDACTED_CARD]',
-    );
-
-    return text;
   }
 }

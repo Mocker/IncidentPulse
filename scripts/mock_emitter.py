@@ -5,24 +5,22 @@ Simulates external microservices (They Might Byte, Stripe, Sentry, Customer SaaS
 emitting health probes, fatal errors, and webhooks to IncidentPulse.
 """
 
+import os
 import json
 import time
 import urllib.request
 import urllib.error
 import sys
 
-API_BASE_URL = "http://localhost:8080"
+API_BASE_URL = os.environ.get("INCIDENT_PULSE_URL", "http://localhost:8084")
 
 def send_webhook(webhook_key: str, source: str, payload: dict) -> bool:
-    url = f"{API_BASE_URL}/webhook"
-    # Serverpod WebhookEndpoint.ingestWebhook payload structure
+    url = f"{API_BASE_URL}/webhook/ingestWebhook"
+    # Serverpod 4 WebhookEndpoint.ingestWebhook JSON-RPC payload structure
     body = json.dumps({
-        "method": "ingestWebhook",
-        "params": {
-            "webhookKey": webhook_key,
-            "source": source,
-            "rawPayloadJson": json.dumps(payload),
-        }
+        "webhookKey": webhook_key,
+        "source": source,
+        "rawPayloadJson": json.dumps(payload),
     }).encode("utf-8")
 
     req = urllib.request.Request(
@@ -36,7 +34,7 @@ def send_webhook(webhook_key: str, source: str, payload: dict) -> bool:
             print(f"[{source.upper()}] Webhook sent successfully -> HTTP {resp.status}")
             return True
     except urllib.error.URLError as e:
-        print(f"[{source.upper()}] Failed to send webhook (Is Serverpod running on :8080?): {e}")
+        print(f"[{source.upper()}] Failed to send webhook (Is Serverpod running at {API_BASE_URL}?): {e}")
         return False
 
 def mock_stripe_payment_failure(webhook_key: str):
