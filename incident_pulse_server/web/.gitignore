@@ -1,0 +1,3 @@
+# Built Flutter web app - build with: cd ../incident_pulse_flutter && flutter build web, then copy build/web/* here
+*
+!.gitignore
