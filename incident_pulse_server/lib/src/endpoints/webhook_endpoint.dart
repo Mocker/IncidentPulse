@@ -101,11 +101,23 @@ class WebhookEndpoint extends Endpoint {
       event,
     );
 
-    // Schedule escalation check via FutureCall
-    await session.serverpod.futureCalls
-        .callWithDelay(const Duration(minutes: 5))
-        .escalation
-        .escalate(created);
+    // Schedule escalation check via FutureCall. Wrapped defensively: on
+    // runtimes where future-call execution is unavailable (e.g. Serverpod
+    // Cloud trial), scheduling is a harmless no-op and the sweep endpoints
+    // (runDueEscalations — polled by external cron and on read) take over.
+    // Both paths are idempotent, so they coexist safely when execution IS
+    // available too.
+    try {
+      await session.serverpod.futureCalls
+          .callWithDelay(const Duration(minutes: 5))
+          .escalation
+          .escalate(created);
+    } catch (e) {
+      session.log(
+        'FutureCall scheduling unavailable, falling back to sweep endpoints: $e',
+        level: LogLevel.warning,
+      );
+    }
 
     // Only dispatch to AI telemetry bridge if this is an internal project or customer explicitly opted-in
     if (service.isInternalOwner || service.enableAiBridge) {
