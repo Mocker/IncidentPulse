@@ -140,8 +140,10 @@ class WebhookEndpoint extends Endpoint {
     String text = input;
 
     // Redact Authorization headers / bearer tokens
+    // NOTE: no inline (?i) flag — Dart's RegExp (JS syntax) rejects it with
+    // FormatException; caseSensitive: false already covers case-insensitivity.
     text = text.replaceAll(
-      RegExp(r'(?i)(bearer\s+[a-z0-9_\-\.]+)', caseSensitive: false),
+      RegExp(r'(bearer\s+[a-z0-9_\-\.]+)', caseSensitive: false),
       'Bearer [REDACTED_TOKEN]',
     );
 
