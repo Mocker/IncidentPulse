@@ -1,0 +1,58 @@
+# IncidentPulse scheduled sweeps — future-call fallback.
+#
+# For runtimes where Serverpod Future Call execution is unavailable (e.g.
+# Serverpod Cloud trial tier), these cron triggers call the idempotent sweep
+# endpoints directly. Every sweep is safe to run on any cadence and safe to
+# race with the Future Call path (escalation is keyed on "no prior Escalation
+# Engine event"; probes just record latest status; cleanup only touches
+# not-yet-redacted rows). If/when future calls are enabled, these become
+# redundant but harmless — no code changes needed to switch back.
+#
+# Required repository secret: INCIDENTPULSE_API_URL — base URL of the
+# deployed API, e.g. https://incident-pulse.<your-host>/ (trailing slash ok).
+
+name: incident-sweeps-fallback
+
+on:
+  schedule:
+    - cron: '* * * * *' # escalations: every minute
+    - cron: '*/5 * * * *' # health probes: every 5 minutes
+    - cron: '17 3 * * *' # retention cleanup: daily
+  workflow_dispatch: # manual run triggers all three sweeps
+
+jobs:
+  escalations:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '* * * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run due-escalation sweep
+        run: |
+          curl -sS -X POST "${API_URL%/}/incident" \
+            -H 'Content-Type: application/json' \
+            -d '{"method":"runDueEscalations","params":{}}'
+        env:
+          API_URL: ${{ secrets.INCIDENTPULSE_API_URL }}
+
+  probes:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run health-probe sweep
+        run: |
+          curl -sS -X POST "${API_URL%/}/service" \
+            -H 'Content-Type: application/json' \
+            -d '{"method":"runHealthProbes","params":{}}'
+        env:
+          API_URL: ${{ secrets.INCIDENTPULSE_API_URL }}
+
+  retention:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '17 3 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run retention-cleanup sweep
+        run: |
+          curl -sS -X POST "${API_URL%/}/service" \
+            -H 'Content-Type: application/json' \
+            -d '{"method":"runRetentionCleanup","params":{}}'
+        env:
+          API_URL: ${{ secrets.INCIDENTPULSE_API_URL }}
