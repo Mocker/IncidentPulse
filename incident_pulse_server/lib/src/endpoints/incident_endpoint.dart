@@ -1,10 +1,24 @@
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
+import '../services/scheduled_tasks.dart';
 import '../services/webhook_dispatcher.dart';
 
 class IncidentEndpoint extends Endpoint {
-  /// Fetches all active / unresolved incidents
+  /// Fetches all active / unresolved incidents.
+  ///
+  /// Also runs the due-escalation sweep inline (idempotent): on runtimes
+  /// where Future Call execution is unavailable (e.g. Serverpod Cloud
+  /// trial), this guarantees no incident waits longer than one observation
+  /// cycle to escalate. When Future Calls ARE available, the sweep no-ops
+  /// on already-escalated incidents, so both paths coexist safely.
   Future<List<Incident>> getActiveIncidents(Session session) async {
+    try {
+      await ScheduledTasks.runDueEscalations(session);
+    } catch (e) {
+      session.log('Lazy escalation sweep failed: $e',
+          level: LogLevel.warning);
+    }
+
     return await Incident.db.find(
       session,
       where: (t) => t.status.notEquals('resolved'),
@@ -162,5 +176,17 @@ class IncidentEndpoint extends Endpoint {
     }
 
     return saved;
+  }
+
+  /// Fallback scheduler endpoint: escalates all incidents that have been
+  /// unacknowledged past the timeout window. Idempotent — safe to call from
+  /// an external cron on any cadence, and safe to race with the Future Call
+  /// path. Returns the number of incidents escalated.
+  ///
+  /// Public (no auth) by design: it can only escalate genuinely overdue
+  /// incidents, so there is nothing an abusive caller can trigger that
+  /// wouldn't have happened anyway.
+  Future<int> runDueEscalations(Session session) async {
+    return await ScheduledTasks.runDueEscalations(session);
   }
 }
