@@ -117,8 +117,52 @@ class ScheduledTasks {
     return escalated;
   }
 
+  /// Creates the incident + alert event + webhook dispatch for a failed
+  /// health probe. Shared by the 5xx path and the exception path so a
+  /// connection-level failure (DNS, timeout, refused) alerts just like a
+  /// 500 does — a service marked "down" with no incident is a silent outage.
+  static Future<void> _createProbeIncident(
+    Session session,
+    Service service,
+    String title,
+    String description,
+    String eventContent,
+  ) async {
+    final now = DateTime.now();
+    final incident = Incident(
+      serviceId: service.id!,
+      title: title,
+      description: description,
+      severity: 'high',
+      status: 'triggered',
+      source: 'uptime',
+      isRedacted: false,
+      triggeredAt: now,
+    );
+    final created = await Incident.db.insertRow(session, incident);
+
+    final event = IncidentEvent(
+      incidentId: created.id!,
+      author: 'Synthetic Health Probe',
+      eventType: 'alert',
+      content: eventContent,
+      isRedacted: false,
+      createdAt: now,
+    );
+    await IncidentEvent.db.insertRow(session, event);
+    session.messages.postMessage('incident_${created.id}', event);
+
+    // Dispatch generic outbound webhooks
+    await WebhookDispatcher.dispatch(
+      session,
+      event: 'incident.triggered',
+      incident: created,
+      service: service,
+    );
+  }
+
   /// Probes a single service's health endpoint and records the result,
-  /// auto-creating an incident on 5xx responses.
+  /// auto-creating an incident on 5xx responses or connection failures.
   static Future<void> probeService(
     Session session,
     Service service,
@@ -166,37 +210,12 @@ class ScheduledTasks {
 
         // Auto-create incident if server returns 5xx error
         if (response.statusCode >= 500) {
-          final incident = Incident(
-            serviceId: service.id!,
-            title: 'Health Probe 5xx Error on ${service.name}',
-            description:
-                'HTTP ${response.statusCode} returned from probe URL ${service.pingUrl}',
-            severity: 'high',
-            status: 'triggered',
-            source: 'uptime',
-            isRedacted: false,
-            triggeredAt: now,
-          );
-          final created = await Incident.db.insertRow(session, incident);
-
-          final event = IncidentEvent(
-            incidentId: created.id!,
-            author: 'Synthetic Health Probe',
-            eventType: 'alert',
-            content:
-                'Synthetic uptime probe returned HTTP ${response.statusCode}',
-            isRedacted: false,
-            createdAt: now,
-          );
-          await IncidentEvent.db.insertRow(session, event);
-          session.messages.postMessage('incident_${created.id}', event);
-
-          // Dispatch generic outbound webhooks
-          await WebhookDispatcher.dispatch(
+          await _createProbeIncident(
             session,
-            event: 'incident.triggered',
-            incident: created,
-            service: service,
+            service,
+            'Health Probe 5xx Error on ${service.name}',
+            'HTTP ${response.statusCode} returned from probe URL ${service.pingUrl}',
+            'Synthetic uptime probe returned HTTP ${response.statusCode}',
           );
         }
       }
@@ -212,6 +231,15 @@ class ScheduledTasks {
         status: 'down',
       );
       await Service.db.updateRow(session, updated);
+
+      // A connection-level failure is an outage too — alert on it.
+      await _createProbeIncident(
+        session,
+        service,
+        'Health Probe Connection Failure on ${service.name}',
+        'Probe of ${service.pingUrl} failed: $e',
+        'Synthetic uptime probe could not reach ${service.pingUrl}: $e',
+      );
     }
   }
 
