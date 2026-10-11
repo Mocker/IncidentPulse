@@ -324,6 +324,18 @@ class Endpoints extends _is.EndpointDispatch {
             rootCause: params['rootCause'],
           ),
         ),
+        // MANUALLY ADDED (fallback scheduler endpoint) — no Dart toolchain
+        // on this machine to run `serverpod generate`; regenerate to verify.
+        'runDueEscalations': _is.MethodConnector(
+          name: 'runDueEscalations',
+          params: {},
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['incident'] as _idvfe0v9.IncidentEndpoint)
+                  .runDueEscalations(session),
+        ),
       },
     );
     connectors['service'] = _is.EndpointConnector(
@@ -529,6 +541,28 @@ class Endpoints extends _is.EndpointDispatch {
             serviceId: params['serviceId'],
             purgeEntireIncidents: params['purgeEntireIncidents'],
           ),
+        ),
+        // MANUALLY ADDED (fallback scheduler endpoints) — no Dart toolchain
+        // on this machine to run `serverpod generate`; regenerate to verify.
+        'runHealthProbes': _is.MethodConnector(
+          name: 'runHealthProbes',
+          params: {},
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['service'] as _ihicv58o.ServiceEndpoint)
+                  .runHealthProbes(session),
+        ),
+        'runRetentionCleanup': _is.MethodConnector(
+          name: 'runRetentionCleanup',
+          params: {},
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['service'] as _ihicv58o.ServiceEndpoint)
+                  .runRetentionCleanup(session),
         ),
       },
     );
