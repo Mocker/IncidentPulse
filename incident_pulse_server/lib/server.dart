@@ -11,6 +11,14 @@ void run(List<String> args) async {
     Endpoints(),
   );
 
+  // Serve the Flutter web dashboard (built to web/app/) at the web root.
+  final flutterAppDir = Directory('web/app');
+  if (!flutterAppDir.existsSync()) {
+    print('Warning: Flutter web app not found at ${flutterAppDir.path}');
+  } else {
+    pod.webServer.addRoute(FlutterRoute(flutterAppDir));
+  }
+
   // Start the server.
   await pod.start();
 
