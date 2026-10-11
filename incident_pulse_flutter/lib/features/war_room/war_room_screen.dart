@@ -169,10 +169,30 @@ class _WarRoomScreenState extends State<WarRoomScreen> {
           Expanded(
             child: _timelineEvents.isEmpty && !_streamError
                 ? const Center(
-                    child: Text(
-                      'Waiting for war room events…',
-                      style:
-                          TextStyle(color: Colors.white38, fontSize: 13),
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.stream_outlined,
+                              color: Colors.white24, size: 40),
+                          SizedBox(height: 12),
+                          Text(
+                            'Live timeline connected',
+                            style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'New war room events will stream in here in real time.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white38, fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 : ListView.separated(

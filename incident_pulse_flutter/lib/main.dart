@@ -62,7 +62,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_input_component_rounded),
-            label: 'Services & Webhooks',
+            label: 'Services',
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:incident_pulse_client/incident_pulse_client.dart';
 import '../../core/client.dart';
@@ -16,18 +17,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<Incident> _activeIncidents = [];
   bool _loading = true;
   String? _error;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    // Keep the board fresh so new incidents appear without manual refresh.
+    _refreshTimer =
+        Timer.periodic(const Duration(seconds: 20), (_) => _loadData(silent: true));
   }
 
-  Future<void> _loadData() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadData({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final results = await Future.wait([
         client.service.listServices(),
@@ -38,9 +51,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _services = (results[0] as List<Service>);
         _activeIncidents = (results[1] as List<Incident>);
         _loading = false;
+        _error = null;
       });
     } catch (e) {
       if (!mounted) return;
+      // Silent background refreshes shouldn't clobber the visible board.
+      if (silent) return;
       setState(() {
         _loading = false;
         _error = 'Could not reach the IncidentPulse server.\n$e';
@@ -160,22 +176,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (_activeIncidents.isEmpty)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 24),
                 decoration: BoxDecoration(
                   color: IncidentTheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: IncidentTheme.surfaceBorder),
                 ),
-                child: const Row(
+                child: Column(
                   children: [
-                    Icon(Icons.check_circle_outline,
-                        color: IncidentTheme.statusOperational, size: 28),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'All quiet. No active incidents across monitored services.',
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: IncidentTheme.statusOperational
+                            .withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
                       ),
+                      child: const Icon(
+                        Icons.check_circle_outline,
+                        color: IncidentTheme.statusOperational,
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'All quiet',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_services.length} service${_services.length == 1 ? '' : 's'} monitored • probes running • no active incidents',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.white54, fontSize: 12.5),
                     ),
                   ],
                 ),
@@ -239,103 +276,137 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final accent =
         isCritical ? IncidentTheme.statusCritical : const Color(0xFFF59E0B);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: const Color(0xFF261217),
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: accent, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.warning_amber_rounded, color: accent, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 560;
+        final content = Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: accent,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          inc.severity.toUpperCase(),
-                          style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _serviceName(inc.serviceId),
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text(
-                        _elapsed(inc.triggeredAt),
-                        style: const TextStyle(
-                            color: Colors.white38, fontSize: 12),
-                      ),
-                    ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      inc.severity.toUpperCase(),
+                      style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _serviceName(inc.serviceId),
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   Text(
-                    inc.title,
+                    _elapsed(inc.triggeredAt),
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Status: ${inc.status} • Source: ${inc.source}',
-                    style:
-                        const TextStyle(color: Colors.white38, fontSize: 12),
+                        color: Colors.white38, fontSize: 12),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 16),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                foregroundColor: Colors.white,
+              const SizedBox(height: 6),
+              Text(
+                inc.title,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600),
               ),
-              icon: const Icon(Icons.meeting_room_rounded, size: 18),
-              label: const Text('Enter War Room'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => WarRoomScreen(
-                      incident: inc,
-                      serviceName: _serviceName(inc.serviceId),
-                    ),
+              const SizedBox(height: 2),
+              Text(
+                'Status: ${inc.status} • Source: ${inc.source}',
+                style:
+                    const TextStyle(color: Colors.white38, fontSize: 12),
+              ),
+            ],
+          ),
+        );
+
+        final warRoomButton = ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: accent,
+            foregroundColor: Colors.white,
+          ),
+          icon: const Icon(Icons.meeting_room_rounded, size: 18),
+          label: const Text('Enter War Room'),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => WarRoomScreen(
+                  incident: inc,
+                  serviceName: _serviceName(inc.serviceId),
+                ),
+              ),
+            ).then((_) => _loadData());
+          },
+        );
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          color: const Color(0xFF261217),
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: accent, width: 1.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: isNarrow
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.warning_amber_rounded,
+                                color: accent, size: 28),
+                          ),
+                          const SizedBox(width: 16),
+                          content,
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                          width: double.infinity, child: warRoomButton),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.warning_amber_rounded,
+                            color: accent, size: 28),
+                      ),
+                      const SizedBox(width: 16),
+                      content,
+                      const SizedBox(width: 16),
+                      warRoomButton,
+                    ],
                   ),
-                ).then((_) => _loadData());
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
