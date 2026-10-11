@@ -36,12 +36,33 @@ class _WarRoomScreenState extends State<WarRoomScreen> {
     _subscribe();
   }
 
+  void _addOrUpdateEvents(List<IncidentEvent> events) {
+    bool changed = false;
+    for (final event in events) {
+      if (event.id != null) {
+        final existingIndex = _timelineEvents.indexWhere((e) => e.id == event.id);
+        if (existingIndex >= 0) {
+          _timelineEvents[existingIndex] = event;
+        } else {
+          _timelineEvents.add(event);
+          changed = true;
+        }
+      } else {
+        _timelineEvents.add(event);
+        changed = true;
+      }
+    }
+    if (changed) {
+      _timelineEvents.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    }
+  }
+
   Future<void> _loadHistory() async {
     try {
       final history = await client.warRoom.getWarRoomEvents(_incident.id!);
       if (!mounted) return;
       setState(() {
-        _timelineEvents.addAll(history);
+        _addOrUpdateEvents(history);
       });
       _scrollToBottom();
     } catch (_) {
@@ -53,7 +74,9 @@ class _WarRoomScreenState extends State<WarRoomScreen> {
     _subscription = client.warRoom.streamWarRoom(_incident.id!).listen(
       (event) {
         if (!mounted) return;
-        setState(() => _timelineEvents.add(event));
+        setState(() {
+          _addOrUpdateEvents([event]);
+        });
         _scrollToBottom();
       },
       onError: (e) {

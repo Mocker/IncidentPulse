@@ -15,7 +15,10 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   List<Service> _services = [];
   List<Incident> _activeIncidents = [];
+  List<Incident> _allIncidents = [];
+  String _selectedFilter = 'active'; // 'active', 'triggered', 'acknowledged', 'resolved'
   bool _loading = true;
+  bool _simulating = false;
   String? _error;
   Timer? _refreshTimer;
 
@@ -45,11 +48,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final results = await Future.wait([
         client.service.listServices(),
         client.incident.getActiveIncidents(),
+        client.incident.getAllIncidents(limit: 100),
       ]);
       if (!mounted) return;
       setState(() {
         _services = (results[0] as List<Service>);
         _activeIncidents = (results[1] as List<Incident>);
+        _allIncidents = (results[2] as List<Incident>);
         _loading = false;
         _error = null;
       });
@@ -97,6 +102,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
+          _simulating
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: IncidentTheme.aiAccent,
+                      ),
+                    ),
+                  ),
+                )
+              : PopupMenuButton<String>(
+                  tooltip: 'Simulate Incoming Webhook Alert',
+                  icon: const Icon(Icons.flash_on, color: Color(0xFFF59E0B)),
+                  onSelected: _triggerSimulation,
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'sentry',
+                      child: Row(
+                        children: [
+                          Icon(Icons.bug_report_outlined, size: 18, color: Colors.orangeAccent),
+                          SizedBox(width: 10),
+                          Text('Simulate Sentry Crash Alert'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'stripe',
+                      child: Row(
+                        children: [
+                          Icon(Icons.payment_outlined, size: 18, color: Colors.redAccent),
+                          SizedBox(width: 10),
+                          Text('Simulate Stripe Payment Failure'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'uptime',
+                      child: Row(
+                        children: [
+                          Icon(Icons.cloud_off_outlined, size: 18, color: Colors.red),
+                          SizedBox(width: 10),
+                          Text('Simulate Uptime Outage (503)'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh Status',
@@ -162,63 +218,106 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Active Incidents Banner
-            const Text(
-              'ACTIVE ALERTS & WAR ROOMS',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: IncidentTheme.statusCritical,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 10),
-            if (_activeIncidents.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 24),
-                decoration: BoxDecoration(
-                  color: IncidentTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: IncidentTheme.surfaceBorder),
+            // Active Incidents Banner & Filter Chips
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'INCIDENTS & WAR ROOMS',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: IncidentTheme.statusCritical,
+                    letterSpacing: 1.2,
+                  ),
                 ),
-                child: Column(
+                Wrap(
+                  spacing: 6,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: IncidentTheme.statusOperational
-                            .withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check_circle_outline,
-                        color: IncidentTheme.statusOperational,
-                        size: 32,
-                      ),
+                    ChoiceChip(
+                      label: Text('Active (${_activeIncidents.length})', style: const TextStyle(fontSize: 11)),
+                      selected: _selectedFilter == 'active',
+                      onSelected: (_) => setState(() => _selectedFilter = 'active'),
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'All quiet',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                    ChoiceChip(
+                      label: Text(
+                        'Triggered (${_allIncidents.where((i) => i.status == 'triggered').length})',
+                        style: const TextStyle(fontSize: 11),
                       ),
+                      selected: _selectedFilter == 'triggered',
+                      onSelected: (_) => setState(() => _selectedFilter = 'triggered'),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_services.length} service${_services.length == 1 ? '' : 's'} monitored • probes running • no active incidents',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          color: Colors.white54, fontSize: 12.5),
+                    ChoiceChip(
+                      label: Text(
+                        'Resolved (${_allIncidents.where((i) => i.status == 'resolved').length})',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      selected: _selectedFilter == 'resolved',
+                      onSelected: (_) => setState(() => _selectedFilter = 'resolved'),
                     ),
                   ],
                 ),
-              )
-            else
-              ..._activeIncidents.map((inc) => _buildIncidentCard(inc)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            () {
+              final displayed = _selectedFilter == 'active'
+                  ? _activeIncidents
+                  : _selectedFilter == 'triggered'
+                      ? _allIncidents.where((i) => i.status == 'triggered').toList()
+                      : _allIncidents.where((i) => i.status == 'resolved').toList();
+
+              if (displayed.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 24),
+                  decoration: BoxDecoration(
+                    color: IncidentTheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: IncidentTheme.surfaceBorder),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: IncidentTheme.statusOperational
+                              .withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check_circle_outline,
+                          color: IncidentTheme.statusOperational,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _selectedFilter == 'resolved' ? 'No resolved incidents recorded yet' : 'All quiet',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _selectedFilter == 'resolved'
+                            ? 'Resolved incidents and post-mortem root causes will appear here.'
+                            : '${_services.length} service${_services.length == 1 ? '' : 's'} monitored • probes running • no active incidents',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 12.5),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return Column(
+                children: displayed.map((inc) => _buildIncidentCard(inc)).toList(),
+              );
+            }(),
             const SizedBox(height: 24),
 
             // Monitored Services Matrix
@@ -326,10 +425,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                'Status: ${inc.status} • Source: ${inc.source}',
+                'Status: ${inc.status.toUpperCase()} • Source: ${inc.source}',
                 style:
                     const TextStyle(color: Colors.white38, fontSize: 12),
               ),
+              if (inc.rootCause != null && inc.rootCause!.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: IncidentTheme.statusOperational.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: IncidentTheme.statusOperational.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    'Root Cause: ${inc.rootCause}',
+                    style: const TextStyle(
+                      color: IncidentTheme.statusOperational,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ],
           ),
         );
@@ -551,5 +671,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _triggerSimulation(String source) async {
+    setState(() => _simulating = true);
+    try {
+      final incident = await client.incident.simulateMockAlert(source: source);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: IncidentTheme.statusCritical,
+          content: Text(
+            '⚡ Simulated [$source] alert injected: Incident #${incident.id}',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          action: SnackBarAction(
+            label: 'Open War Room',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WarRoomScreen(
+                    incident: incident,
+                    serviceName: _serviceName(incident.serviceId),
+                  ),
+                ),
+              ).then((_) => _loadData());
+            },
+          ),
+        ),
+      );
+      await _loadData(silent: true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Simulation failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _simulating = false);
+    }
   }
 }
