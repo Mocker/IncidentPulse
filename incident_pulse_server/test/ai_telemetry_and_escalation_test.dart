@@ -85,7 +85,6 @@ void main() {
     });
 
     test('Escalation Policy Model: Configures retry interval, email, and webhook target', () {
-      final now = DateTime.now();
       final policy = EscalationPolicy(
         id: 1,
         serviceId: 1,
