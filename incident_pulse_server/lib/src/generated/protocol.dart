@@ -12,6 +12,8 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:incident_pulse_server/src/generated/incident.dart' as _ix5n0svs;
+import 'package:incident_pulse_server/src/generated/incident_event.dart'
+    as _i4kpl7wh;
 import 'package:incident_pulse_server/src/generated/service.dart' as _i9u6usup;
 import 'package:incident_pulse_server/src/generated/webhook_subscription.dart'
     as _imz83oex;
@@ -631,6 +633,11 @@ class Protocol extends _is.DatabaseSerializationManager {
           ? (data as Map).map((k, v) =>
               MapEntry(deserialize<String>(k), deserialize<String>(v)))
           : null) as T;
+    }
+    if (t == List<_i4kpl7wh.IncidentEvent>) {
+      return (data as List)
+          .map((e) => deserialize<_i4kpl7wh.IncidentEvent>(e))
+          .toList() as T;
     }
     if (t == List<_imz83oex.WebhookSubscription>) {
       return (data as List)

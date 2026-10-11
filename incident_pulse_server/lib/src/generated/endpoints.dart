@@ -324,8 +324,6 @@ class Endpoints extends _is.EndpointDispatch {
             rootCause: params['rootCause'],
           ),
         ),
-        // MANUALLY ADDED (fallback scheduler endpoint) — no Dart toolchain
-        // on this machine to run `serverpod generate`; regenerate to verify.
         'runDueEscalations': _is.MethodConnector(
           name: 'runDueEscalations',
           params: {},
@@ -542,8 +540,6 @@ class Endpoints extends _is.EndpointDispatch {
             purgeEntireIncidents: params['purgeEntireIncidents'],
           ),
         ),
-        // MANUALLY ADDED (fallback scheduler endpoints) — no Dart toolchain
-        // on this machine to run `serverpod generate`; regenerate to verify.
         'runHealthProbes': _is.MethodConnector(
           name: 'runHealthProbes',
           params: {},
@@ -570,6 +566,25 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'warRoom',
       endpoint: endpoints['warRoom']!,
       methodConnectors: {
+        'getWarRoomEvents': _is.MethodConnector(
+          name: 'getWarRoomEvents',
+          params: {
+            'incidentId': _is.ParameterDescription(
+              name: 'incidentId',
+              type: _is.getType<int>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['warRoom'] as _ia8zoqqr.WarRoomEndpoint)
+                  .getWarRoomEvents(
+            session,
+            params['incidentId'],
+          ),
+        ),
         'postWarRoomNote': _is.MethodConnector(
           name: 'postWarRoomNote',
           params: {

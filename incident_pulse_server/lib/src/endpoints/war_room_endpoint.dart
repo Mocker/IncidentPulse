@@ -2,6 +2,20 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 
 class WarRoomEndpoint extends Endpoint {
+  /// Fetches the historical timeline events for an incident's war room.
+  /// Call this on screen init, then subscribe to streamWarRoom for live updates.
+  Future<List<IncidentEvent>> getWarRoomEvents(
+    Session session,
+    int incidentId,
+  ) async {
+    return await IncidentEvent.db.find(
+      session,
+      where: (t) => t.incidentId.equals(incidentId),
+      orderBy: (t) => t.createdAt,
+      limit: 100,
+    );
+  }
+
   /// Realtime WebSockets stream: Emits timeline events, live chat notes,
   /// and status changes for an active incident War Room.
   Stream<IncidentEvent> streamWarRoom(Session session, int incidentId) async* {
