@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
+import '../services/scheduled_tasks.dart';
 
 class ServiceEndpoint extends Endpoint {
   /// Lists all registered services and their current status
@@ -160,5 +161,20 @@ class ServiceEndpoint extends Endpoint {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rnd = Random.secure();
     return List.generate(length, (index) => chars[rnd.nextInt(chars.length)]).join();
+  }
+
+  /// Fallback scheduler endpoint: probes every service with a configured
+  /// ping URL and records the result (auto-creates incidents on 5xx).
+  /// Idempotent — safe to call from an external cron on any cadence, and
+  /// safe to race with the Future Call path. Returns services probed.
+  Future<int> runHealthProbes(Session session) async {
+    return await ScheduledTasks.runHealthProbes(session);
+  }
+
+  /// Fallback scheduler endpoint: scrubs expired raw payloads per tenant
+  /// retention windows. Idempotent — only touches not-yet-redacted rows.
+  /// Returns the number of incidents sanitized.
+  Future<int> runRetentionCleanup(Session session) async {
+    return await ScheduledTasks.runRetentionCleanup(session);
   }
 }
