@@ -334,6 +334,44 @@ class Endpoints extends _is.EndpointDispatch {
               (endpoints['incident'] as _idvfe0v9.IncidentEndpoint)
                   .runDueEscalations(session),
         ),
+        'getAllIncidents': _is.MethodConnector(
+          name: 'getAllIncidents',
+          params: {
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['incident'] as _idvfe0v9.IncidentEndpoint)
+                  .getAllIncidents(
+            session,
+            limit: params['limit'],
+          ),
+        ),
+        'simulateMockAlert': _is.MethodConnector(
+          name: 'simulateMockAlert',
+          params: {
+            'source': _is.ParameterDescription(
+              name: 'source',
+              type: _is.getType<String>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['incident'] as _idvfe0v9.IncidentEndpoint)
+                  .simulateMockAlert(
+            session,
+            source: params['source'],
+          ),
+        ),
       },
     );
     connectors['service'] = _is.EndpointConnector(

@@ -8,6 +8,9 @@ incident:
   - createIncident:
   - acknowledgeIncident:
   - resolveIncident:
+  - runDueEscalations:
+  - getAllIncidents:
+  - simulateMockAlert:
 service:
   - listServices:
   - createService:
@@ -15,7 +18,10 @@ service:
   - updateServiceStatus:
   - updatePrivacyAndRetention:
   - purgeServiceHistory:
+  - runHealthProbes:
+  - runRetentionCleanup:
 warRoom:
+  - getWarRoomEvents:
   - streamWarRoom:
   - postWarRoomNote:
 webhook:
