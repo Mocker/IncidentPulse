@@ -32,7 +32,21 @@ class _WarRoomScreenState extends State<WarRoomScreen> {
   void initState() {
     super.initState();
     _incident = widget.incident;
+    _loadHistory();
     _subscribe();
+  }
+
+  Future<void> _loadHistory() async {
+    try {
+      final history = await client.warRoom.getWarRoomEvents(_incident.id!);
+      if (!mounted) return;
+      setState(() {
+        _timelineEvents.addAll(history);
+      });
+      _scrollToBottom();
+    } catch (_) {
+      // History is best-effort; the live stream will still deliver new events.
+    }
   }
 
   void _subscribe() {

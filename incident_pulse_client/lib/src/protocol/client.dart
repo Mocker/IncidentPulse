@@ -56,18 +56,17 @@ class EndpointAiTelemetry extends _isc.EndpointRef {
     required String diagnosisMarkdown,
     String? suggestedDiff,
     String? authToken,
-  }) =>
-      caller.callServerEndpoint<_i7bypfhu.IncidentEvent>(
-        'aiTelemetry',
-        'submitAiDiagnosis',
-        {
-          'incidentId': incidentId,
-          'agentName': agentName,
-          'diagnosisMarkdown': diagnosisMarkdown,
-          'suggestedDiff': suggestedDiff,
-          'authToken': authToken,
-        },
-      );
+  }) => caller.callServerEndpoint<_i7bypfhu.IncidentEvent>(
+    'aiTelemetry',
+    'submitAiDiagnosis',
+    {
+      'incidentId': incidentId,
+      'agentName': agentName,
+      'diagnosisMarkdown': diagnosisMarkdown,
+      'suggestedDiff': suggestedDiff,
+      'authToken': authToken,
+    },
+  );
 
   /// Records a structured reliability report for historical research
   _ida.Future<_izi1yss6.ReliabilityReport> recordReliabilityReport({
@@ -78,20 +77,19 @@ class EndpointAiTelemetry extends _isc.EndpointRef {
     required double healthScore,
     required String reportSummary,
     String? authToken,
-  }) =>
-      caller.callServerEndpoint<_izi1yss6.ReliabilityReport>(
-        'aiTelemetry',
-        'recordReliabilityReport',
-        {
-          'serviceId': serviceId,
-          'uptimePercent': uptimePercent,
-          'incidentCount': incidentCount,
-          'mttrMinutes': mttrMinutes,
-          'healthScore': healthScore,
-          'reportSummary': reportSummary,
-          'authToken': authToken,
-        },
-      );
+  }) => caller.callServerEndpoint<_izi1yss6.ReliabilityReport>(
+    'aiTelemetry',
+    'recordReliabilityReport',
+    {
+      'serviceId': serviceId,
+      'uptimePercent': uptimePercent,
+      'incidentCount': incidentCount,
+      'mttrMinutes': mttrMinutes,
+      'healthScore': healthScore,
+      'reportSummary': reportSummary,
+      'authToken': authToken,
+    },
+  );
 }
 
 /// {@category Endpoint}
@@ -101,7 +99,13 @@ class EndpointIncident extends _isc.EndpointRef {
   @override
   String get name => 'incident';
 
-  /// Fetches all active / unresolved incidents
+  /// Fetches all active / unresolved incidents.
+  ///
+  /// Also runs the due-escalation sweep inline (idempotent): on runtimes
+  /// where Future Call execution is unavailable (e.g. Serverpod Cloud
+  /// trial), this guarantees no incident waits longer than one observation
+  /// cycle to escalate. When Future Calls ARE available, the sweep no-ops
+  /// on already-escalated incidents, so both paths coexist safely.
   _ida.Future<List<_ii2a5p2r.Incident>> getActiveIncidents() =>
       caller.callServerEndpoint<List<_ii2a5p2r.Incident>>(
         'incident',
@@ -113,15 +117,11 @@ class EndpointIncident extends _isc.EndpointRef {
   _ida.Future<List<_ii2a5p2r.Incident>> getServiceIncidents({
     required int serviceId,
     required int limit,
-  }) =>
-      caller.callServerEndpoint<List<_ii2a5p2r.Incident>>(
-        'incident',
-        'getServiceIncidents',
-        {
-          'serviceId': serviceId,
-          'limit': limit,
-        },
-      );
+  }) => caller.callServerEndpoint<List<_ii2a5p2r.Incident>>(
+    'incident',
+    'getServiceIncidents',
+    {'serviceId': serviceId, 'limit': limit},
+  );
 
   /// Manually creates a new incident
   _ida.Future<_ii2a5p2r.Incident> createIncident({
@@ -130,48 +130,50 @@ class EndpointIncident extends _isc.EndpointRef {
     required String description,
     required String severity,
     required String source,
-  }) =>
-      caller.callServerEndpoint<_ii2a5p2r.Incident>(
-        'incident',
-        'createIncident',
-        {
-          'serviceId': serviceId,
-          'title': title,
-          'description': description,
-          'severity': severity,
-          'source': source,
-        },
-      );
+  }) => caller
+      .callServerEndpoint<_ii2a5p2r.Incident>('incident', 'createIncident', {
+        'serviceId': serviceId,
+        'title': title,
+        'description': description,
+        'severity': severity,
+        'source': source,
+      });
 
   /// Acknowledges an incident by a responder
   _ida.Future<_ii2a5p2r.Incident?> acknowledgeIncident({
     required int incidentId,
     required String responderName,
-  }) =>
-      caller.callServerEndpoint<_ii2a5p2r.Incident?>(
-        'incident',
-        'acknowledgeIncident',
-        {
-          'incidentId': incidentId,
-          'responderName': responderName,
-        },
-      );
+  }) => caller.callServerEndpoint<_ii2a5p2r.Incident?>(
+    'incident',
+    'acknowledgeIncident',
+    {'incidentId': incidentId, 'responderName': responderName},
+  );
 
   /// Resolves an incident with root cause documentation
   _ida.Future<_ii2a5p2r.Incident?> resolveIncident({
     required int incidentId,
     required String resolverName,
     required String rootCause,
-  }) =>
-      caller.callServerEndpoint<_ii2a5p2r.Incident?>(
-        'incident',
-        'resolveIncident',
-        {
-          'incidentId': incidentId,
-          'resolverName': resolverName,
-          'rootCause': rootCause,
-        },
-      );
+  }) => caller.callServerEndpoint<_ii2a5p2r.Incident?>(
+    'incident',
+    'resolveIncident',
+    {
+      'incidentId': incidentId,
+      'resolverName': resolverName,
+      'rootCause': rootCause,
+    },
+  );
+
+  /// Fallback scheduler endpoint: escalates all incidents that have been
+  /// unacknowledged past the timeout window. Idempotent — safe to call from
+  /// an external cron on any cadence, and safe to race with the Future Call
+  /// path. Returns the number of incidents escalated.
+  ///
+  /// Public (no auth) by design: it can only escalate genuinely overdue
+  /// incidents, so there is nothing an abusive caller can trigger that
+  /// wouldn't have happened anyway.
+  _ida.Future<int> runDueEscalations() =>
+      caller.callServerEndpoint<int>('incident', 'runDueEscalations', {});
 }
 
 /// {@category Endpoint}
@@ -206,21 +208,17 @@ class EndpointService extends _isc.EndpointRef {
     required int dataRetentionDays,
     required bool redactPii,
   }) =>
-      caller.callServerEndpoint<_icu7ot0t.Service>(
-        'service',
-        'createService',
-        {
-          'name': name,
-          'slug': slug,
-          'pingUrl': pingUrl,
-          'pingHeaders': pingHeaders,
-          'checkIntervalSeconds': checkIntervalSeconds,
-          'isInternalOwner': isInternalOwner,
-          'enableAiBridge': enableAiBridge,
-          'dataRetentionDays': dataRetentionDays,
-          'redactPii': redactPii,
-        },
-      );
+      caller.callServerEndpoint<_icu7ot0t.Service>('service', 'createService', {
+        'name': name,
+        'slug': slug,
+        'pingUrl': pingUrl,
+        'pingHeaders': pingHeaders,
+        'checkIntervalSeconds': checkIntervalSeconds,
+        'isInternalOwner': isInternalOwner,
+        'enableAiBridge': enableAiBridge,
+        'dataRetentionDays': dataRetentionDays,
+        'redactPii': redactPii,
+      });
 
   /// Updates synthetic health ping configuration (URL, headers, check interval)
   _ida.Future<_icu7ot0t.Service?> updateServicePing({
@@ -228,31 +226,23 @@ class EndpointService extends _isc.EndpointRef {
     String? pingUrl,
     Map<String, String>? pingHeaders,
     int? checkIntervalSeconds,
-  }) =>
-      caller.callServerEndpoint<_icu7ot0t.Service?>(
-        'service',
-        'updateServicePing',
-        {
-          'serviceId': serviceId,
-          'pingUrl': pingUrl,
-          'pingHeaders': pingHeaders,
-          'checkIntervalSeconds': checkIntervalSeconds,
-        },
-      );
+  }) => caller
+      .callServerEndpoint<_icu7ot0t.Service?>('service', 'updateServicePing', {
+        'serviceId': serviceId,
+        'pingUrl': pingUrl,
+        'pingHeaders': pingHeaders,
+        'checkIntervalSeconds': checkIntervalSeconds,
+      });
 
   /// Updates status of a service
   _ida.Future<_icu7ot0t.Service?> updateServiceStatus({
     required int serviceId,
     required String status,
-  }) =>
-      caller.callServerEndpoint<_icu7ot0t.Service?>(
-        'service',
-        'updateServiceStatus',
-        {
-          'serviceId': serviceId,
-          'status': status,
-        },
-      );
+  }) => caller.callServerEndpoint<_icu7ot0t.Service?>(
+    'service',
+    'updateServiceStatus',
+    {'serviceId': serviceId, 'status': status},
+  );
 
   /// Updates tenant privacy, AI bridge opt-in, and compliance retention settings
   _ida.Future<_icu7ot0t.Service?> updatePrivacyAndRetention({
@@ -260,17 +250,16 @@ class EndpointService extends _isc.EndpointRef {
     required bool enableAiBridge,
     required int dataRetentionDays,
     required bool redactPii,
-  }) =>
-      caller.callServerEndpoint<_icu7ot0t.Service?>(
-        'service',
-        'updatePrivacyAndRetention',
-        {
-          'serviceId': serviceId,
-          'enableAiBridge': enableAiBridge,
-          'dataRetentionDays': dataRetentionDays,
-          'redactPii': redactPii,
-        },
-      );
+  }) => caller.callServerEndpoint<_icu7ot0t.Service?>(
+    'service',
+    'updatePrivacyAndRetention',
+    {
+      'serviceId': serviceId,
+      'enableAiBridge': enableAiBridge,
+      'dataRetentionDays': dataRetentionDays,
+      'redactPii': redactPii,
+    },
+  );
 
   /// GDPR / CCPA Article 17 "Right to Erasure"
   /// Purges all raw payloads, sensitive headers, and timeline chat for this service
@@ -278,15 +267,23 @@ class EndpointService extends _isc.EndpointRef {
   _ida.Future<bool> purgeServiceHistory({
     required int serviceId,
     required bool purgeEntireIncidents,
-  }) =>
-      caller.callServerEndpoint<bool>(
-        'service',
-        'purgeServiceHistory',
-        {
-          'serviceId': serviceId,
-          'purgeEntireIncidents': purgeEntireIncidents,
-        },
-      );
+  }) => caller.callServerEndpoint<bool>('service', 'purgeServiceHistory', {
+    'serviceId': serviceId,
+    'purgeEntireIncidents': purgeEntireIncidents,
+  });
+
+  /// Fallback scheduler endpoint: probes every service with a configured
+  /// ping URL and records the result (auto-creates incidents on 5xx).
+  /// Idempotent — safe to call from an external cron on any cadence, and
+  /// safe to race with the Future Call path. Returns services probed.
+  _ida.Future<int> runHealthProbes() =>
+      caller.callServerEndpoint<int>('service', 'runHealthProbes', {});
+
+  /// Fallback scheduler endpoint: scrubs expired raw payloads per tenant
+  /// retention windows. Idempotent — only touches not-yet-redacted rows.
+  /// Returns the number of incidents sanitized.
+  _ida.Future<int> runRetentionCleanup() =>
+      caller.callServerEndpoint<int>('service', 'runRetentionCleanup', {});
 }
 
 /// {@category Endpoint}
@@ -296,16 +293,22 @@ class EndpointWarRoom extends _isc.EndpointRef {
   @override
   String get name => 'warRoom';
 
+  /// Fetches the historical timeline events for an incident's war room.
+  /// Call this on screen init, then subscribe to streamWarRoom for live updates.
+  _ida.Future<List<_i7bypfhu.IncidentEvent>> getWarRoomEvents(int incidentId) =>
+      caller.callServerEndpoint<List<_i7bypfhu.IncidentEvent>>(
+        'warRoom',
+        'getWarRoomEvents',
+        {'incidentId': incidentId},
+      );
+
   /// Realtime WebSockets stream: Emits timeline events, live chat notes,
   /// and status changes for an active incident War Room.
   _ida.Stream<_i7bypfhu.IncidentEvent> streamWarRoom(int incidentId) =>
-      caller.callStreamingServerEndpoint<_ida.Stream<_i7bypfhu.IncidentEvent>,
-          _i7bypfhu.IncidentEvent>(
-        'warRoom',
-        'streamWarRoom',
-        {'incidentId': incidentId},
-        {},
-      );
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_i7bypfhu.IncidentEvent>,
+        _i7bypfhu.IncidentEvent
+      >('warRoom', 'streamWarRoom', {'incidentId': incidentId}, {});
 
   /// Posts a note, diagnostic message, or chat entry into the War Room
   _ida.Future<_i7bypfhu.IncidentEvent> postWarRoomNote({
@@ -313,17 +316,16 @@ class EndpointWarRoom extends _isc.EndpointRef {
     required String author,
     required String content,
     required String eventType,
-  }) =>
-      caller.callServerEndpoint<_i7bypfhu.IncidentEvent>(
-        'warRoom',
-        'postWarRoomNote',
-        {
-          'incidentId': incidentId,
-          'author': author,
-          'content': content,
-          'eventType': eventType,
-        },
-      );
+  }) => caller.callServerEndpoint<_i7bypfhu.IncidentEvent>(
+    'warRoom',
+    'postWarRoomNote',
+    {
+      'incidentId': incidentId,
+      'author': author,
+      'content': content,
+      'eventType': eventType,
+    },
+  );
 }
 
 /// {@category Endpoint}
@@ -340,16 +342,11 @@ class EndpointWebhook extends _isc.EndpointRef {
     required String webhookKey,
     required String source,
     required String rawPayloadJson,
-  }) =>
-      caller.callServerEndpoint<bool>(
-        'webhook',
-        'ingestWebhook',
-        {
-          'webhookKey': webhookKey,
-          'source': source,
-          'rawPayloadJson': rawPayloadJson,
-        },
-      );
+  }) => caller.callServerEndpoint<bool>('webhook', 'ingestWebhook', {
+    'webhookKey': webhookKey,
+    'source': source,
+    'rawPayloadJson': rawPayloadJson,
+  });
 }
 
 /// {@category Endpoint}
@@ -360,13 +357,13 @@ class EndpointWebhookSubscription extends _isc.EndpointRef {
   String get name => 'webhookSubscription';
 
   /// Lists all active outbound webhook subscriptions, optionally filtered by service
-  _ida.Future<List<_iwimdxih.WebhookSubscription>> listSubscriptions(
-          {int? serviceId}) =>
-      caller.callServerEndpoint<List<_iwimdxih.WebhookSubscription>>(
-        'webhookSubscription',
-        'listSubscriptions',
-        {'serviceId': serviceId},
-      );
+  _ida.Future<List<_iwimdxih.WebhookSubscription>> listSubscriptions({
+    int? serviceId,
+  }) => caller.callServerEndpoint<List<_iwimdxih.WebhookSubscription>>(
+    'webhookSubscription',
+    'listSubscriptions',
+    {'serviceId': serviceId},
+  );
 
   /// Registers a new generic outbound webhook subscription
   _ida.Future<_iwimdxih.WebhookSubscription> createSubscription({
@@ -376,19 +373,18 @@ class EndpointWebhookSubscription extends _isc.EndpointRef {
     String? secretKey,
     Map<String, String>? customHeaders,
     List<String>? events,
-  }) =>
-      caller.callServerEndpoint<_iwimdxih.WebhookSubscription>(
-        'webhookSubscription',
-        'createSubscription',
-        {
-          'name': name,
-          'targetUrl': targetUrl,
-          'serviceId': serviceId,
-          'secretKey': secretKey,
-          'customHeaders': customHeaders,
-          'events': events,
-        },
-      );
+  }) => caller.callServerEndpoint<_iwimdxih.WebhookSubscription>(
+    'webhookSubscription',
+    'createSubscription',
+    {
+      'name': name,
+      'targetUrl': targetUrl,
+      'serviceId': serviceId,
+      'secretKey': secretKey,
+      'customHeaders': customHeaders,
+      'events': events,
+    },
+  );
 
   /// Deletes a webhook subscription
   _ida.Future<bool> deleteSubscription({required int subscriptionId}) =>
@@ -399,13 +395,13 @@ class EndpointWebhookSubscription extends _isc.EndpointRef {
       );
 
   /// Sends a test ping to verify webhook target connectivity and HMAC verification
-  _ida.Future<Map<String, dynamic>> testSubscription(
-          {required int subscriptionId}) =>
-      caller.callServerEndpoint<Map<String, dynamic>>(
-        'webhookSubscription',
-        'testSubscription',
-        {'subscriptionId': subscriptionId},
-      );
+  _ida.Future<Map<String, dynamic>> testSubscription({
+    required int subscriptionId,
+  }) => caller.callServerEndpoint<Map<String, dynamic>>(
+    'webhookSubscription',
+    'testSubscription',
+    {'subscriptionId': subscriptionId},
+  );
 }
 
 class Modules {
@@ -422,26 +418,22 @@ class Client extends _isc.ServerpodClientShared {
     dynamic securityContext,
     Duration? streamingConnectionTimeout,
     Duration? connectionTimeout,
-    Function(
-      _isc.MethodCallContext,
-      Object,
-      StackTrace,
-    )? onFailedCall,
+    Function(_isc.MethodCallContext, Object, StackTrace)? onFailedCall,
     Function(_isc.MethodCallContext)? onSucceededCall,
     bool? disconnectStreamsOnLostInternetConnection,
     _i85jenna.Client? httpClientOverride,
   }) : super(
-          host,
-          _il2as5qe.Protocol(),
-          securityContext: securityContext,
-          streamingConnectionTimeout: streamingConnectionTimeout,
-          connectionTimeout: connectionTimeout,
-          onFailedCall: onFailedCall,
-          onSucceededCall: onSucceededCall,
-          disconnectStreamsOnLostInternetConnection:
-              disconnectStreamsOnLostInternetConnection,
-          httpClientOverride: httpClientOverride,
-        ) {
+         host,
+         _il2as5qe.Protocol(),
+         securityContext: securityContext,
+         streamingConnectionTimeout: streamingConnectionTimeout,
+         connectionTimeout: connectionTimeout,
+         onFailedCall: onFailedCall,
+         onSucceededCall: onSucceededCall,
+         disconnectStreamsOnLostInternetConnection:
+             disconnectStreamsOnLostInternetConnection,
+         httpClientOverride: httpClientOverride,
+       ) {
     aiTelemetry = EndpointAiTelemetry(this);
     incident = EndpointIncident(this);
     service = EndpointService(this);
@@ -467,15 +459,16 @@ class Client extends _isc.ServerpodClientShared {
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
-        'aiTelemetry': aiTelemetry,
-        'incident': incident,
-        'service': service,
-        'warRoom': warRoom,
-        'webhook': webhook,
-        'webhookSubscription': webhookSubscription,
-      };
+    'aiTelemetry': aiTelemetry,
+    'incident': incident,
+    'service': service,
+    'warRoom': warRoom,
+    'webhook': webhook,
+    'webhookSubscription': webhookSubscription,
+  };
 
   @override
-  Map<String, _isc.ModuleEndpointCaller> get moduleLookup =>
-      {'auth': modules.auth};
+  Map<String, _isc.ModuleEndpointCaller> get moduleLookup => {
+    'auth': modules.auth,
+  };
 }

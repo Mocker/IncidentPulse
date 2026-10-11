@@ -12,6 +12,8 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:incident_pulse_client/src/protocol/incident.dart' as _ii2a5p2r;
+import 'package:incident_pulse_client/src/protocol/incident_event.dart'
+    as _i7bypfhu;
 import 'package:incident_pulse_client/src/protocol/service.dart' as _icu7ot0t;
 import 'package:incident_pulse_client/src/protocol/webhook_subscription.dart'
     as _iwimdxih;
@@ -45,10 +47,7 @@ class Protocol extends _isc.SerializationManager {
   }
 
   @override
-  T deserialize<T>(
-    dynamic data, [
-    Type? t,
-  ]) {
+  T deserialize<T>(dynamic data, [Type? t]) {
     t ??= T;
 
     final dataClassName = getClassNameFromObjectJson(data);
@@ -103,61 +102,84 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _isc.getType<_itnvi5b5.WebhookSubscription?>()) {
       return (data != null
-          ? _itnvi5b5.WebhookSubscription.fromJson(data)
-          : null) as T;
+              ? _itnvi5b5.WebhookSubscription.fromJson(data)
+              : null)
+          as T;
     }
     if (t == Map<String, String>) {
-      return (data as Map).map((k, v) =>
-          MapEntry(deserialize<String>(k), deserialize<String>(v))) as T;
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<String>(v)),
+          )
+          as T;
     }
     if (t == _isc.getType<Map<String, String>?>()) {
       return (data != null
-          ? (data as Map).map((k, v) =>
-              MapEntry(deserialize<String>(k), deserialize<String>(v)))
-          : null) as T;
+              ? (data as Map).map(
+                  (k, v) =>
+                      MapEntry(deserialize<String>(k), deserialize<String>(v)),
+                )
+              : null)
+          as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
     if (t == Map<String, dynamic>) {
-      return (data as Map).map((k, v) =>
-          MapEntry(deserialize<String>(k), deserialize<dynamic>(v))) as T;
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<dynamic>(v)),
+          )
+          as T;
     }
     if (t == dynamic) {
       return deserializeDynamicFieldValue(data) as T;
     }
     if (t == List<_ii2a5p2r.Incident>) {
       return (data as List)
-          .map((e) => deserialize<_ii2a5p2r.Incident>(e))
-          .toList() as T;
+              .map((e) => deserialize<_ii2a5p2r.Incident>(e))
+              .toList()
+          as T;
     }
     if (t == List<_icu7ot0t.Service>) {
       return (data as List)
-          .map((e) => deserialize<_icu7ot0t.Service>(e))
-          .toList() as T;
+              .map((e) => deserialize<_icu7ot0t.Service>(e))
+              .toList()
+          as T;
     }
     if (t == Map<String, String>) {
-      return (data as Map).map((k, v) =>
-          MapEntry(deserialize<String>(k), deserialize<String>(v))) as T;
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<String>(v)),
+          )
+          as T;
     }
     if (t == _isc.getType<Map<String, String>?>()) {
       return (data != null
-          ? (data as Map).map((k, v) =>
-              MapEntry(deserialize<String>(k), deserialize<String>(v)))
-          : null) as T;
+              ? (data as Map).map(
+                  (k, v) =>
+                      MapEntry(deserialize<String>(k), deserialize<String>(v)),
+                )
+              : null)
+          as T;
+    }
+    if (t == List<_i7bypfhu.IncidentEvent>) {
+      return (data as List)
+              .map((e) => deserialize<_i7bypfhu.IncidentEvent>(e))
+              .toList()
+          as T;
     }
     if (t == List<_iwimdxih.WebhookSubscription>) {
       return (data as List)
-          .map((e) => deserialize<_iwimdxih.WebhookSubscription>(e))
-          .toList() as T;
+              .map((e) => deserialize<_iwimdxih.WebhookSubscription>(e))
+              .toList()
+          as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
     if (t == _isc.getType<List<String>?>()) {
       return (data != null
-          ? (data as List).map((e) => deserialize<String>(e)).toList()
-          : null) as T;
+              ? (data as List).map((e) => deserialize<String>(e)).toList()
+              : null)
+          as T;
     }
     try {
       return _i312scxx.Protocol().deserialize<T>(data, t);
@@ -173,7 +195,7 @@ class Protocol extends _isc.SerializationManager {
       _i48x74ln.ReliabilityReport => 'ReliabilityReport',
       _i70zm44a.Service => 'Service',
       _itnvi5b5.WebhookSubscription => 'WebhookSubscription',
-      _ => null
+      _ => null,
     };
   }
 
@@ -183,8 +205,10 @@ class Protocol extends _isc.SerializationManager {
     if (className != null) return className;
 
     if (data is Map<String, dynamic> && data['__className__'] is String) {
-      return (data['__className__'] as String)
-          .replaceFirst('incident_pulse.', '');
+      return (data['__className__'] as String).replaceFirst(
+        'incident_pulse.',
+        '',
+      );
     }
 
     switch (data) {
