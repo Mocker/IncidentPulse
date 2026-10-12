@@ -112,13 +112,13 @@ class _EscalationPolicyImpl extends EscalationPolicy {
     String? notifyWebhookUrl,
     required bool isActive,
   }) : super._(
-          id: id,
-          serviceId: serviceId,
-          timeoutMinutes: timeoutMinutes,
-          notifyEmail: notifyEmail,
-          notifyWebhookUrl: notifyWebhookUrl,
-          isActive: isActive,
-        );
+         id: id,
+         serviceId: serviceId,
+         timeoutMinutes: timeoutMinutes,
+         notifyEmail: notifyEmail,
+         notifyWebhookUrl: notifyWebhookUrl,
+         isActive: isActive,
+       );
 
   /// Returns a shallow copy of this [EscalationPolicy]
   /// with some or all fields replaced by the given arguments.

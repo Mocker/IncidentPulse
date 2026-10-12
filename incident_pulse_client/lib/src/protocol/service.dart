@@ -61,23 +61,29 @@ abstract class Service
       pingHeaders: jsonSerialization['pingHeaders'] == null
           ? null
           : _i7ndyoko.Protocol().deserialize<Map<String, String>>(
-              jsonSerialization['pingHeaders']),
+              jsonSerialization['pingHeaders'],
+            ),
       status: jsonSerialization['status'] as String,
       checkIntervalSeconds: jsonSerialization['checkIntervalSeconds'] as int,
       lastPingAt: jsonSerialization['lastPingAt'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(
-              jsonSerialization['lastPingAt']),
+              jsonSerialization['lastPingAt'],
+            ),
       lastPingStatus: jsonSerialization['lastPingStatus'] as int?,
-      isInternalOwner:
-          _isc.BoolJsonExtension.fromJson(jsonSerialization['isInternalOwner']),
-      enableAiBridge:
-          _isc.BoolJsonExtension.fromJson(jsonSerialization['enableAiBridge']),
+      isInternalOwner: _isc.BoolJsonExtension.fromJson(
+        jsonSerialization['isInternalOwner'],
+      ),
+      enableAiBridge: _isc.BoolJsonExtension.fromJson(
+        jsonSerialization['enableAiBridge'],
+      ),
       dataRetentionDays: jsonSerialization['dataRetentionDays'] as int,
-      redactPii:
-          _isc.BoolJsonExtension.fromJson(jsonSerialization['redactPii']),
-      createdAt:
-          _isc.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      redactPii: _isc.BoolJsonExtension.fromJson(
+        jsonSerialization['redactPii'],
+      ),
+      createdAt: _isc.DateTimeJsonExtension.fromJson(
+        jsonSerialization['createdAt'],
+      ),
     );
   }
 
@@ -204,22 +210,22 @@ class _ServiceImpl extends Service {
     required bool redactPii,
     required DateTime createdAt,
   }) : super._(
-          id: id,
-          name: name,
-          slug: slug,
-          webhookKey: webhookKey,
-          pingUrl: pingUrl,
-          pingHeaders: pingHeaders,
-          status: status,
-          checkIntervalSeconds: checkIntervalSeconds,
-          lastPingAt: lastPingAt,
-          lastPingStatus: lastPingStatus,
-          isInternalOwner: isInternalOwner,
-          enableAiBridge: enableAiBridge,
-          dataRetentionDays: dataRetentionDays,
-          redactPii: redactPii,
-          createdAt: createdAt,
-        );
+         id: id,
+         name: name,
+         slug: slug,
+         webhookKey: webhookKey,
+         pingUrl: pingUrl,
+         pingHeaders: pingHeaders,
+         status: status,
+         checkIntervalSeconds: checkIntervalSeconds,
+         lastPingAt: lastPingAt,
+         lastPingStatus: lastPingStatus,
+         isInternalOwner: isInternalOwner,
+         enableAiBridge: enableAiBridge,
+         dataRetentionDays: dataRetentionDays,
+         redactPii: redactPii,
+         createdAt: createdAt,
+       );
 
   /// Returns a shallow copy of this [Service]
   /// with some or all fields replaced by the given arguments.
@@ -250,19 +256,13 @@ class _ServiceImpl extends Service {
       pingUrl: pingUrl is String? ? pingUrl : this.pingUrl,
       pingHeaders: pingHeaders is Map<String, String>?
           ? pingHeaders
-          : this.pingHeaders?.map((
-                key0,
-                value0,
-              ) =>
-                  MapEntry(
-                    key0,
-                    value0,
-                  )),
+          : this.pingHeaders?.map((key0, value0) => MapEntry(key0, value0)),
       status: status ?? this.status,
       checkIntervalSeconds: checkIntervalSeconds ?? this.checkIntervalSeconds,
       lastPingAt: lastPingAt is DateTime? ? lastPingAt : this.lastPingAt,
-      lastPingStatus:
-          lastPingStatus is int? ? lastPingStatus : this.lastPingStatus,
+      lastPingStatus: lastPingStatus is int?
+          ? lastPingStatus
+          : this.lastPingStatus,
       isInternalOwner: isInternalOwner ?? this.isInternalOwner,
       enableAiBridge: enableAiBridge ?? this.enableAiBridge,
       dataRetentionDays: dataRetentionDays ?? this.dataRetentionDays,

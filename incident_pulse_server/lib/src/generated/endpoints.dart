@@ -15,6 +15,7 @@ import 'package:incident_pulse_server/src/generated/future_calls.dart'
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i1n3uhu0;
 import '../endpoints/ai_telemetry_endpoint.dart' as _i395avo5;
+import '../endpoints/health_endpoint.dart' as _ica9y4w0;
 import '../endpoints/incident_endpoint.dart' as _idvfe0v9;
 import '../endpoints/service_endpoint.dart' as _ihicv58o;
 import '../endpoints/war_room_endpoint.dart' as _ia8zoqqr;
@@ -30,6 +31,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'aiTelemetry',
+          null,
+        ),
+      'health': _ica9y4w0.HealthEndpoint()
+        ..initialize(
+          server,
+          'health',
           null,
         ),
       'incident': _idvfe0v9.IncidentEndpoint()
@@ -184,6 +191,22 @@ class Endpoints extends _is.EndpointDispatch {
             authToken: params['authToken'],
           ),
         ),
+      },
+    );
+    connectors['health'] = _is.EndpointConnector(
+      name: 'health',
+      endpoint: endpoints['health']!,
+      methodConnectors: {
+        'heartbeat': _is.MethodConnector(
+          name: 'heartbeat',
+          params: {},
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['health'] as _ica9y4w0.HealthEndpoint)
+                  .heartbeat(session),
+        )
       },
     );
     connectors['incident'] = _is.EndpointConnector(

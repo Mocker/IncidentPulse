@@ -41,10 +41,12 @@ abstract class IncidentEvent
       author: jsonSerialization['author'] as String,
       eventType: jsonSerialization['eventType'] as String,
       content: jsonSerialization['content'] as String,
-      isRedacted:
-          _isc.BoolJsonExtension.fromJson(jsonSerialization['isRedacted']),
-      createdAt:
-          _isc.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      isRedacted: _isc.BoolJsonExtension.fromJson(
+        jsonSerialization['isRedacted'],
+      ),
+      createdAt: _isc.DateTimeJsonExtension.fromJson(
+        jsonSerialization['createdAt'],
+      ),
     );
   }
 
@@ -123,14 +125,14 @@ class _IncidentEventImpl extends IncidentEvent {
     required bool isRedacted,
     required DateTime createdAt,
   }) : super._(
-          id: id,
-          incidentId: incidentId,
-          author: author,
-          eventType: eventType,
-          content: content,
-          isRedacted: isRedacted,
-          createdAt: createdAt,
-        );
+         id: id,
+         incidentId: incidentId,
+         author: author,
+         eventType: eventType,
+         content: content,
+         isRedacted: isRedacted,
+         createdAt: createdAt,
+       );
 
   /// Returns a shallow copy of this [IncidentEvent]
   /// with some or all fields replaced by the given arguments.

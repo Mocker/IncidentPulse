@@ -59,21 +59,25 @@ abstract class Incident
       source: jsonSerialization['source'] as String,
       rootCause: jsonSerialization['rootCause'] as String?,
       rawPayload: jsonSerialization['rawPayload'] as String?,
-      isRedacted:
-          _isc.BoolJsonExtension.fromJson(jsonSerialization['isRedacted']),
+      isRedacted: _isc.BoolJsonExtension.fromJson(
+        jsonSerialization['isRedacted'],
+      ),
       expiresAt: jsonSerialization['expiresAt'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['expiresAt']),
-      triggeredAt:
-          _isc.DateTimeJsonExtension.fromJson(jsonSerialization['triggeredAt']),
+      triggeredAt: _isc.DateTimeJsonExtension.fromJson(
+        jsonSerialization['triggeredAt'],
+      ),
       acknowledgedAt: jsonSerialization['acknowledgedAt'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(
-              jsonSerialization['acknowledgedAt']),
+              jsonSerialization['acknowledgedAt'],
+            ),
       resolvedAt: jsonSerialization['resolvedAt'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(
-              jsonSerialization['resolvedAt']),
+              jsonSerialization['resolvedAt'],
+            ),
     );
   }
 
@@ -194,21 +198,21 @@ class _IncidentImpl extends Incident {
     DateTime? acknowledgedAt,
     DateTime? resolvedAt,
   }) : super._(
-          id: id,
-          serviceId: serviceId,
-          title: title,
-          description: description,
-          severity: severity,
-          status: status,
-          source: source,
-          rootCause: rootCause,
-          rawPayload: rawPayload,
-          isRedacted: isRedacted,
-          expiresAt: expiresAt,
-          triggeredAt: triggeredAt,
-          acknowledgedAt: acknowledgedAt,
-          resolvedAt: resolvedAt,
-        );
+         id: id,
+         serviceId: serviceId,
+         title: title,
+         description: description,
+         severity: severity,
+         status: status,
+         source: source,
+         rootCause: rootCause,
+         rawPayload: rawPayload,
+         isRedacted: isRedacted,
+         expiresAt: expiresAt,
+         triggeredAt: triggeredAt,
+         acknowledgedAt: acknowledgedAt,
+         resolvedAt: resolvedAt,
+       );
 
   /// Returns a shallow copy of this [Incident]
   /// with some or all fields replaced by the given arguments.
@@ -243,8 +247,9 @@ class _IncidentImpl extends Incident {
       isRedacted: isRedacted ?? this.isRedacted,
       expiresAt: expiresAt is DateTime? ? expiresAt : this.expiresAt,
       triggeredAt: triggeredAt ?? this.triggeredAt,
-      acknowledgedAt:
-          acknowledgedAt is DateTime? ? acknowledgedAt : this.acknowledgedAt,
+      acknowledgedAt: acknowledgedAt is DateTime?
+          ? acknowledgedAt
+          : this.acknowledgedAt,
       resolvedAt: resolvedAt is DateTime? ? resolvedAt : this.resolvedAt,
     );
   }

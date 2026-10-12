@@ -2,6 +2,8 @@ aiTelemetry:
   - getTelemetrySummary:
   - submitAiDiagnosis:
   - recordReliabilityReport:
+health:
+  - heartbeat:
 incident:
   - getActiveIncidents:
   - getServiceIncidents:
