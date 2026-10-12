@@ -2,8 +2,12 @@ import 'dart:io';
 import 'package:serverpod/serverpod.dart';
 import 'src/generated/protocol.dart';
 import 'src/generated/endpoints.dart';
+import 'src/endpoints/health_endpoint.dart';
 
 void run(List<String> args) async {
+  // Record startup time for the heartbeat endpoint (deploy identification).
+  ServerHealth.startupAt = DateTime.now().toUtc();
+
   // Initialize Serverpod and connect it with the generated code.
   final pod = Serverpod(
     args,
@@ -38,6 +42,7 @@ void _scheduleRecurringMaintenance(Serverpod pod) {
       .every(const Duration(hours: 24))
       .retentionCleanup
       .cleanup();
+    ServerHealth.retentionCleanupScheduled = true;
     print('Scheduled Serverpod FutureCall: Daily retention cleanup (every 24h)');
   } catch (e) {
     print('Notice: FutureCall recurring retention scheduling unavailable: $e');
@@ -49,6 +54,7 @@ void _scheduleRecurringMaintenance(Serverpod pod) {
       .every(const Duration(seconds: 60))
       .healthProbe
       .probe(null);
+    ServerHealth.healthProbeScheduled = true;
     print('Scheduled Serverpod FutureCall: Periodic health probe sweep (every 60s)');
   } catch (e) {
     print('Notice: FutureCall recurring health probe scheduling unavailable: $e');
