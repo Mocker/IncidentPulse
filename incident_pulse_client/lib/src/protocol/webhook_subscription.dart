@@ -49,12 +49,15 @@ abstract class WebhookSubscription
       customHeaders: jsonSerialization['customHeaders'] == null
           ? null
           : _i7ndyoko.Protocol().deserialize<Map<String, String>>(
-              jsonSerialization['customHeaders']),
-      events: _i7ndyoko.Protocol()
-          .deserialize<List<String>>(jsonSerialization['events']),
+              jsonSerialization['customHeaders'],
+            ),
+      events: _i7ndyoko.Protocol().deserialize<List<String>>(
+        jsonSerialization['events'],
+      ),
       isActive: _isc.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
-      createdAt:
-          _isc.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      createdAt: _isc.DateTimeJsonExtension.fromJson(
+        jsonSerialization['createdAt'],
+      ),
     );
   }
 
@@ -145,16 +148,16 @@ class _WebhookSubscriptionImpl extends WebhookSubscription {
     required bool isActive,
     required DateTime createdAt,
   }) : super._(
-          id: id,
-          serviceId: serviceId,
-          name: name,
-          targetUrl: targetUrl,
-          secretKey: secretKey,
-          customHeaders: customHeaders,
-          events: events,
-          isActive: isActive,
-          createdAt: createdAt,
-        );
+         id: id,
+         serviceId: serviceId,
+         name: name,
+         targetUrl: targetUrl,
+         secretKey: secretKey,
+         customHeaders: customHeaders,
+         events: events,
+         isActive: isActive,
+         createdAt: createdAt,
+       );
 
   /// Returns a shallow copy of this [WebhookSubscription]
   /// with some or all fields replaced by the given arguments.
@@ -179,14 +182,7 @@ class _WebhookSubscriptionImpl extends WebhookSubscription {
       secretKey: secretKey is String? ? secretKey : this.secretKey,
       customHeaders: customHeaders is Map<String, String>?
           ? customHeaders
-          : this.customHeaders?.map((
-                key0,
-                value0,
-              ) =>
-                  MapEntry(
-                    key0,
-                    value0,
-                  )),
+          : this.customHeaders?.map((key0, value0) => MapEntry(key0, value0)),
       events: events ?? this.events.map((e0) => e0).toList(),
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,

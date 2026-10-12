@@ -45,8 +45,9 @@ abstract class ReliabilityReport
       mttrMinutes: (jsonSerialization['mttrMinutes'] as num).toDouble(),
       healthScore: (jsonSerialization['healthScore'] as num).toDouble(),
       reportSummary: jsonSerialization['reportSummary'] as String,
-      generatedAt:
-          _isc.DateTimeJsonExtension.fromJson(jsonSerialization['generatedAt']),
+      generatedAt: _isc.DateTimeJsonExtension.fromJson(
+        jsonSerialization['generatedAt'],
+      ),
     );
   }
 
@@ -131,15 +132,15 @@ class _ReliabilityReportImpl extends ReliabilityReport {
     required String reportSummary,
     required DateTime generatedAt,
   }) : super._(
-          id: id,
-          serviceId: serviceId,
-          uptimePercent: uptimePercent,
-          incidentCount: incidentCount,
-          mttrMinutes: mttrMinutes,
-          healthScore: healthScore,
-          reportSummary: reportSummary,
-          generatedAt: generatedAt,
-        );
+         id: id,
+         serviceId: serviceId,
+         uptimePercent: uptimePercent,
+         incidentCount: incidentCount,
+         mttrMinutes: mttrMinutes,
+         healthScore: healthScore,
+         reportSummary: reportSummary,
+         generatedAt: generatedAt,
+       );
 
   /// Returns a shallow copy of this [ReliabilityReport]
   /// with some or all fields replaced by the given arguments.
