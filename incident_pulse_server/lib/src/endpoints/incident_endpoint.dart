@@ -1,5 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
+import '../generated/future_calls.dart';
 import '../services/scheduled_tasks.dart';
 import '../services/webhook_dispatcher.dart';
 
@@ -88,6 +89,19 @@ class IncidentEndpoint extends Endpoint {
         event: 'incident.triggered',
         incident: created,
         service: service,
+      );
+    }
+
+    // Schedule escalation check via FutureCall with graceful fallback to lazy sweep
+    try {
+      await session.serverpod.futureCalls
+          .callWithDelay(const Duration(minutes: 5))
+          .escalation
+          .escalate(created);
+    } catch (e) {
+      session.log(
+        'FutureCall scheduling notice (fallback sweep active): $e',
+        level: LogLevel.info,
       );
     }
 
@@ -303,6 +317,19 @@ class IncidentEndpoint extends Endpoint {
       incident: created,
       service: service,
     );
+
+    // Schedule escalation check via FutureCall with graceful fallback to lazy sweep
+    try {
+      await session.serverpod.futureCalls
+          .callWithDelay(const Duration(minutes: 5))
+          .escalation
+          .escalate(created);
+    } catch (e) {
+      session.log(
+        'FutureCall scheduling notice (fallback sweep active): $e',
+        level: LogLevel.info,
+      );
+    }
 
     return created;
   }

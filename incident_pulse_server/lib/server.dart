@@ -24,6 +24,35 @@ void run(List<String> args) async {
 
   // Automatically seed baseline internal services if not yet present
   await _seedBaselineServices(pod);
+
+  // Register recurring background maintenance FutureCalls with graceful fallback
+  _scheduleRecurringMaintenance(pod);
+}
+
+/// Registers periodic Serverpod FutureCalls for automated compliance retention
+/// and health probing with defensive exception handling for trial/restricted environments.
+void _scheduleRecurringMaintenance(Serverpod pod) {
+  try {
+    // Automated compliance retention cleanup running daily
+    pod.futureCalls.callRecurring(identifier: 'retention_cleanup_daily')
+      .every(const Duration(hours: 24))
+      .retentionCleanup
+      .cleanup();
+    print('Scheduled Serverpod FutureCall: Daily retention cleanup (every 24h)');
+  } catch (e) {
+    print('Notice: FutureCall recurring retention scheduling unavailable: $e');
+  }
+
+  try {
+    // Scheduled health probe sweeps every 60 seconds
+    pod.futureCalls.callRecurring(identifier: 'health_probe_sweep')
+      .every(const Duration(seconds: 60))
+      .healthProbe
+      .probe(null);
+    print('Scheduled Serverpod FutureCall: Periodic health probe sweep (every 60s)');
+  } catch (e) {
+    print('Notice: FutureCall recurring health probe scheduling unavailable: $e');
+  }
 }
 
 /// Idempotently seeds initial monitored services for internal owner
