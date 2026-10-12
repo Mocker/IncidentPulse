@@ -8,6 +8,10 @@ class ServerHealth {
   static DateTime? startupAt;
   static bool retentionCleanupScheduled = false;
   static bool healthProbeScheduled = false;
+
+  /// Set to true by [StartupProbeFutureCall] when it executes. Distinguishes
+  /// "schedules registered" from "executor actually running calls".
+  static bool futureCallsExecuting = false;
 }
 
 /// Lightweight heartbeat for uptime monitors and deploy verification.
@@ -24,6 +28,7 @@ class HealthEndpoint extends Endpoint {
       'futureCalls': {
         'retentionCleanupScheduled': ServerHealth.retentionCleanupScheduled,
         'healthProbeScheduled': ServerHealth.healthProbeScheduled,
+        'executing': ServerHealth.futureCallsExecuting,
       },
     };
   }
