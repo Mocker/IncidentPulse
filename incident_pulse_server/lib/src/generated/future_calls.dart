@@ -19,6 +19,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import '../future_calls/escalation_future_call.dart' as _i5q8xscg;
 import '../future_calls/health_probe_future_call.dart' as _ie22dhrh;
 import '../future_calls/retention_cleanup_future_call.dart' as _iq7fyrns;
+import '../future_calls/startup_probe_future_call.dart' as _i4jo285z;
 
 /// Invokes a future call.
 typedef _InvokeFutureCall = Future<void> Function(
@@ -65,6 +66,8 @@ class FutureCalls extends _is.FutureCallDispatch<_FutureCallRef> {
       'EscalationEscalateFutureCall': EscalationEscalateFutureCall(),
       'HealthProbeProbeFutureCall': HealthProbeProbeFutureCall(),
       'RetentionCleanupCleanupFutureCall': RetentionCleanupCleanupFutureCall(),
+      'StartupProbeMarkExecutingFutureCall':
+          StartupProbeMarkExecutingFutureCall(),
     };
     _futureCallManager = futureCallManager;
     _serverId = serverId;
@@ -188,6 +191,9 @@ class _FutureCallRef {
 
   late final retentionCleanup =
       _RetentionCleanupFutureCallDispatcher(_invokeFutureCall);
+
+  late final startupProbe =
+      _StartupProbeFutureCallDispatcher(_invokeFutureCall);
 }
 
 class _EscalationFutureCallDispatcher {
@@ -229,6 +235,19 @@ class _RetentionCleanupFutureCallDispatcher {
   }
 }
 
+class _StartupProbeFutureCallDispatcher {
+  _StartupProbeFutureCallDispatcher(this._invokeFutureCall);
+
+  final _InvokeFutureCall _invokeFutureCall;
+
+  Future<void> markExecuting() {
+    return _invokeFutureCall(
+      'StartupProbeMarkExecutingFutureCall',
+      null,
+    );
+  }
+}
+
 class EscalationEscalateFutureCall extends _is.FutureCall<_ix5n0svs.Incident>
     implements _is.InvokableFutureCall<_ix5n0svs.Incident> {
   @override
@@ -265,5 +284,16 @@ class RetentionCleanupCleanupFutureCall extends _is.FutureCall
     _is.SerializableModel? object,
   ) async {
     await _iq7fyrns.RetentionCleanupFutureCall().cleanup(session);
+  }
+}
+
+class StartupProbeMarkExecutingFutureCall extends _is.FutureCall
+    implements _is.InvokableFutureCall {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _is.SerializableModel? object,
+  ) async {
+    await _i4jo285z.StartupProbeFutureCall().markExecuting(session);
   }
 }

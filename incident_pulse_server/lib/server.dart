@@ -31,6 +31,19 @@ void run(List<String> args) async {
 
   // Register recurring background maintenance FutureCalls with graceful fallback
   _scheduleRecurringMaintenance(pod);
+
+  // One-shot execution probe: if FutureCalls are actually being executed
+  // (not just scheduled), this flips ServerHealth.futureCallsExecuting
+  // within ~30s of startup. The heartbeat endpoint exposes the result.
+  try {
+    await pod.futureCalls
+        .callWithDelay(const Duration(seconds: 30))
+        .startupProbe
+        .markExecuting();
+    print('Scheduled startup FutureCall execution probe (30s delay)');
+  } catch (e) {
+    print('Notice: startup execution probe scheduling unavailable: $e');
+  }
 }
 
 /// Registers periodic Serverpod FutureCalls for automated compliance retention
