@@ -5,6 +5,66 @@
 
 ---
 
+## 🏆 For Hackathon Judges (60-second test path)
+
+**Live demo, no setup:** https://incident-pulse.serverpod.space/ — Flutter dashboard wired to the production Serverpod backend at `https://incident-pulse.api.serverpod.space`. Stays up through judging (Oct 20).
+
+**Fastest way to see it work:**
+1. Open the dashboard — the service matrix shows live status.
+2. Fire a synthetic alert via `simulateMockAlert` (Incident endpoint), or run `./scripts/mock_emitter.py all` locally.
+3. Watch the incident land in real time, open its War Room, post a note, acknowledge it, resolve it.
+4. Escalation, health probes, and retention cleanup run as idempotent sweeps (`runDueEscalations`, `runHealthProbes`, `runRetentionCleanup`) — triggerable on demand, no cron needed to verify.
+
+**System diagram:**
+
+```mermaid
+graph TD
+    subgraph Ingress
+        Sentry[Sentry / Stripe / Uptime webhooks] --> WH[WebhookEndpoint]
+        Probe[Health-probe sweep] --> SVC[ServiceEndpoint]
+    end
+    subgraph Serverpod 4 Backend
+        WH --> DB[(PostgreSQL 16)]
+        WH --> Bus[Message Bus]
+        INC[IncidentEndpoint] --> DB
+        INC --> Bus
+        SVC --> DB
+        AI[AiTelemetryEndpoint] <--> DB
+        ESC[Escalation sweep] --> DB
+        ESC --> Bus
+    end
+    subgraph Clients
+        Bus -->|WebSocket stream| App[Flutter Dashboard + War Room]
+        App -->|RPC| INC
+        AI -->|opt-in bridge| Agent[External AI agents]
+    end
+```
+
+**Endpoint inventory** (all methods verified against `main`; Serverpod RPC — call via the generated client in `incident_pulse_client/` or Serverpod Insights):
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| Incident | `getActiveIncidents` / `getAllIncidents` / `getServiceIncidents` | List incidents (active / all / by service) |
+| Incident | `createIncident` | Manually raise an incident |
+| Incident | `simulateMockAlert` | Fire a synthetic alert — the one-click demo path |
+| Incident | `acknowledgeIncident` / `resolveIncident` | State-machine transitions |
+| Incident | `runDueEscalations` | Sweep: escalate overdue unacknowledged incidents |
+| Service | `listServices` / `createService` | Manage monitored services |
+| Service | `updateServicePing` / `updateServiceStatus` | Probe target + status |
+| Service | `updatePrivacyAndRetention` | Retention window (30/90/180/365d) + PII toggles |
+| Service | `purgeServiceHistory` | GDPR right-to-erasure |
+| Service | `runHealthProbes` / `runRetentionCleanup` | Sweeps: synthetic uptime checks, payload scrubbing |
+| Webhook | `ingestWebhook` | Alert ingress (Sentry/Stripe/uptime) with PII redaction at the door |
+| WebhookSubscription | `listSubscriptions` / `createSubscription` / `deleteSubscription` / `testSubscription` | Manage + dry-run outbound webhook subscriptions |
+| WarRoom | `postWarRoomNote` / `getWarRoomEvents` | Realtime triage timeline over the Serverpod Message Bus |
+| AiTelemetry | `getTelemetrySummary` | MTTR / active counts for opted-in services (key-authenticated) |
+| AiTelemetry | `submitAiDiagnosis` | AI agent posts diagnosis + diff into the War Room |
+| AiTelemetry | `recordReliabilityReport` | Store aggregated reliability benchmarks |
+
+Full protocol details, data models, and the privacy architecture: [ARCHITECTURE.md](ARCHITECTURE.md).
+
+---
+
 ## 🌟 Why IncidentPulse?
 
 Modern incident management software (PagerDuty, Datadog) is enterprise-priced ($30+/seat/mo), heavily bloated, and complicated for solo developers and agile teams.
