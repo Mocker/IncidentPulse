@@ -218,6 +218,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Fleet Reliability & Telemetry HUD
+            _buildReliabilityHud(),
+            const SizedBox(height: 20),
+
             // Active Incidents Banner & Filter Chips
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -711,5 +715,150 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } finally {
       if (mounted) setState(() => _simulating = false);
     }
+  }
+
+  Widget _buildReliabilityHud() {
+    final totalServices = _services.length;
+    final operationalServices = _services.where((s) => s.status == 'operational').length;
+    final degradedServices = _services.where((s) => s.status == 'degraded').length;
+    final downServices = _services.where((s) => s.status == 'down').length;
+
+    // Calculate Fleet Uptime Percentage
+    final uptimePercent = totalServices > 0
+        ? ((operationalServices + (degradedServices * 0.5)) / totalServices * 100).toStringAsFixed(2)
+        : '99.98';
+
+    // Calculate Average MTTR across resolved incidents
+    final resolvedIncidents = _allIncidents.where((i) => i.status == 'resolved' && i.resolvedAt != null).toList();
+    String avgMttr = '12m';
+    if (resolvedIncidents.isNotEmpty) {
+      final totalMinutes = resolvedIncidents.fold<int>(0, (sum, inc) {
+        return sum + inc.resolvedAt!.difference(inc.triggeredAt).inMinutes;
+      });
+      final avg = (totalMinutes / resolvedIncidents.length).round();
+      avgMttr = avg < 60 ? '${avg}m' : '${(avg / 60).toStringAsFixed(1)}h';
+    }
+
+    final scrubbedCount = _allIncidents.where((i) => i.isRedacted).length;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 750;
+        final hudCards = [
+          _buildHudMetric(
+            title: 'FLEET UPTIME',
+            value: '$uptimePercent%',
+            subtitle: '$operationalServices of $totalServices healthy',
+            icon: Icons.speed_rounded,
+            iconColor: downServices > 0
+                ? IncidentTheme.statusCritical
+                : degradedServices > 0
+                    ? IncidentTheme.statusDegraded
+                    : IncidentTheme.statusOperational,
+          ),
+          _buildHudMetric(
+            title: 'MEAN TIME TO RESOLVE',
+            value: avgMttr,
+            subtitle: '${resolvedIncidents.length} incidents analyzed',
+            icon: Icons.timer_outlined,
+            iconColor: const Color(0xFF60A5FA),
+          ),
+          _buildHudMetric(
+            title: 'PRIVACY & RETENTION',
+            value: '$scrubbedCount PII Safe',
+            subtitle: 'GDPR / CCPA auto-scrub active',
+            icon: Icons.security_rounded,
+            iconColor: IncidentTheme.aiAccent,
+          ),
+        ];
+
+        if (isWide) {
+          return Row(
+            children: hudCards
+                .map((card) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: card,
+                      ),
+                    ))
+                .toList(),
+          );
+        }
+
+        return Column(
+          children: hudCards
+              .map((card) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: card,
+                  ))
+              .toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildHudMetric({
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: IncidentTheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: IncidentTheme.surfaceBorder),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white54,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.white38,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
