@@ -348,14 +348,134 @@ class _WarRoomScreenState extends State<WarRoomScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            SelectableText(
-              event.content,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 13.5, height: 1.4),
-            ),
+            _buildEventContent(event.content),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildEventContent(String content) {
+    if (!content.contains('```') && !content.contains('### ') && !content.contains('#### ')) {
+      return SelectableText(
+        content,
+        style: const TextStyle(
+            color: Colors.white, fontSize: 13.5, height: 1.4),
+      );
+    }
+
+    // Split markdown sections and code blocks
+    final parts = <Widget>[];
+    final lines = content.split('\n');
+    final codeBuffer = StringBuffer();
+    bool inCodeBlock = false;
+    String codeBlockLang = '';
+
+    for (final line in lines) {
+      if (line.startsWith('```')) {
+        if (inCodeBlock) {
+          // Closing code block
+          final codeText = codeBuffer.toString().trimRight();
+          final isDiff = codeBlockLang.toLowerCase().contains('diff');
+          parts.add(
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D1117),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDiff
+                      ? IncidentTheme.aiAccent.withValues(alpha: 0.3)
+                      : IncidentTheme.surfaceBorder,
+                ),
+              ),
+              child: SelectableText(
+                codeText,
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12.5,
+                  height: 1.4,
+                  color: isDiff ? const Color(0xFFE2E8F0) : const Color(0xFF38BDF8),
+                ),
+              ),
+            ),
+          );
+          codeBuffer.clear();
+          inCodeBlock = false;
+          codeBlockLang = '';
+        } else {
+          // Opening code block
+          inCodeBlock = true;
+          codeBlockLang = line.replaceFirst('```', '').trim();
+        }
+      } else if (inCodeBlock) {
+        codeBuffer.writeln(line);
+      } else if (line.startsWith('### ')) {
+        parts.add(
+          Padding(
+            padding: const EdgeInsets.only(top: 4, bottom: 4),
+            child: Text(
+              line.replaceFirst('### ', ''),
+              style: const TextStyle(
+                color: IncidentTheme.aiAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 14.5,
+              ),
+            ),
+          ),
+        );
+      } else if (line.startsWith('#### ')) {
+        parts.add(
+          Padding(
+            padding: const EdgeInsets.only(top: 4, bottom: 2),
+            child: Text(
+              line.replaceFirst('#### ', ''),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        );
+      } else if (line.trim().isNotEmpty) {
+        parts.add(
+          SelectableText(
+            line,
+            style: const TextStyle(
+                color: Colors.white, fontSize: 13.5, height: 1.4),
+          ),
+        );
+      }
+    }
+
+    if (inCodeBlock && codeBuffer.isNotEmpty) {
+      parts.add(
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0D1117),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: IncidentTheme.surfaceBorder),
+          ),
+          child: SelectableText(
+            codeBuffer.toString().trimRight(),
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 12.5,
+              height: 1.4,
+              color: Color(0xFF38BDF8),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: parts,
     );
   }
 
