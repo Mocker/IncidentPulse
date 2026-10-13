@@ -128,6 +128,25 @@ class ScheduledTasks {
     String description,
     String eventContent,
   ) async {
+    // Dedup: if there's already an open uptime incident for this service,
+    // the outage is already tracked — don't spam a new incident per probe.
+    final existing = await Incident.db.find(
+      session,
+      where: (t) =>
+          t.serviceId.equals(service.id!) &
+          t.source.equals('uptime') &
+          (t.status.equals('triggered') | t.status.equals('acknowledged')),
+      limit: 1,
+    );
+    if (existing.isNotEmpty) {
+      session.log(
+        'Skipping duplicate probe incident for ${service.name} '
+        '(open incident #${existing.first.id})',
+        level: LogLevel.info,
+      );
+      return;
+    }
+
     final now = DateTime.now();
     final incident = Incident(
       serviceId: service.id!,
