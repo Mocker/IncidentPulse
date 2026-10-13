@@ -8,7 +8,11 @@ import '../services/scheduled_tasks.dart';
 /// endpoints share one implementation.
 class HealthProbeFutureCall extends FutureCall {
   Future<void> probe(Session session, Service? service) async {
-    if (service == null) return;
+    if (service == null) {
+      // Recurring sweep (registered with null): probe all services.
+      await ScheduledTasks.runHealthProbes(session);
+      return;
+    }
     await ScheduledTasks.probeService(session, service);
   }
 }
