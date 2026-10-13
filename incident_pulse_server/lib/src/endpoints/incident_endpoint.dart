@@ -14,17 +14,15 @@ class IncidentEndpoint extends Endpoint {
   /// on already-escalated incidents, so both paths coexist safely.
   Future<List<Incident>> getActiveIncidents(Session session) async {
     // Note: escalation sweeps run via FutureCall (every 60s), not lazily here.
-    // Uses explicit status list instead of notEquals('resolved') — the
-    // negation filter was hanging at the DB level under load.
-    return await Incident.db.find(
+    // Filters in Dart instead of SQL — the status column filter was hanging
+    // at the DB level (likely index issue after bulk updates). Fetches recent
+    // incidents and filters for non-resolved ones.
+    final recent = await Incident.db.find(
       session,
-      where: (t) =>
-          t.status.equals('triggered') |
-          t.status.equals('acknowledged') |
-          t.status.equals('escalated'),
       orderBy: (t) => t.triggeredAt.desc(),
-      limit: 100,
+      limit: 200,
     );
+    return recent.where((i) => i.status != 'resolved').take(100).toList();
   }
 
   /// Fetches incident history for a specific service
