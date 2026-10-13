@@ -14,10 +14,14 @@ class IncidentEndpoint extends Endpoint {
   /// on already-escalated incidents, so both paths coexist safely.
   Future<List<Incident>> getActiveIncidents(Session session) async {
     // Note: escalation sweeps run via FutureCall (every 60s), not lazily here.
-    // The lazy sweep was removed after it caused endpoint hangs under load.
+    // Uses explicit status list instead of notEquals('resolved') — the
+    // negation filter was hanging at the DB level under load.
     return await Incident.db.find(
       session,
-      where: (t) => t.status.notEquals('resolved'),
+      where: (t) =>
+          t.status.equals('triggered') |
+          t.status.equals('acknowledged') |
+          t.status.equals('escalated'),
       orderBy: (t) => t.triggeredAt.desc(),
       limit: 100,
     );
