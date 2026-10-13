@@ -539,6 +539,31 @@ class Endpoints extends _is.EndpointDispatch {
             status: params['status'],
           ),
         ),
+        'setMonitoringEnabled': _is.MethodConnector(
+          name: 'setMonitoringEnabled',
+          params: {
+            'serviceId': _is.ParameterDescription(
+              name: 'serviceId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'enabled': _is.ParameterDescription(
+              name: 'enabled',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call: (
+            _is.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['service'] as _ihicv58o.ServiceEndpoint)
+                  .setMonitoringEnabled(
+            session,
+            serviceId: params['serviceId'],
+            enabled: params['enabled'],
+          ),
+        ),
         'updatePrivacyAndRetention': _is.MethodConnector(
           name: 'updatePrivacyAndRetention',
           params: {

@@ -278,6 +278,18 @@ class EndpointService extends _isc.EndpointRef {
     {'serviceId': serviceId, 'status': status},
   );
 
+  /// Toggles whether a service is actively monitored by health probes.
+  /// Disabled services keep their full configuration but are skipped by
+  /// the probe sweeps until re-enabled.
+  _ida.Future<_icu7ot0t.Service?> setMonitoringEnabled({
+    required int serviceId,
+    required bool enabled,
+  }) => caller.callServerEndpoint<_icu7ot0t.Service?>(
+    'service',
+    'setMonitoringEnabled',
+    {'serviceId': serviceId, 'enabled': enabled},
+  );
+
   /// Updates tenant privacy, AI bridge opt-in, and compliance retention settings
   _ida.Future<_icu7ot0t.Service?> updatePrivacyAndRetention({
     required int serviceId,

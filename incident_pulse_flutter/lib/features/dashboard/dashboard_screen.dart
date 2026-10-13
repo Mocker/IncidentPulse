@@ -37,6 +37,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
+  Future<void> _toggleMonitoring(Service service, bool enabled) async {
+    try {
+      final updated = await client.service.setMonitoringEnabled(
+        serviceId: service.id!,
+        enabled: enabled,
+      );
+      if (!mounted || updated == null) return;
+      setState(() {
+        final i = _services.indexWhere((s) => s.id == service.id);
+        if (i != -1) _services[i] = updated;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update monitoring: $e')),
+      );
+    }
+  }
+
   Future<void> _loadData({bool silent = false}) async {
     if (!silent) {
       setState(() {
@@ -602,6 +621,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: const TextStyle(color: Colors.white38, fontSize: 11.5),
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text(
+                  'Monitoring',
+                  style: TextStyle(color: Colors.white54, fontSize: 11),
+                ),
+                const Spacer(),
+                Switch(
+                  value: service.monitoringEnabled,
+                  activeThumbColor: IncidentTheme.aiAccent,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  onChanged: (enabled) => _toggleMonitoring(service, enabled),
+                ),
+              ],
             ),
           ],
         ),
