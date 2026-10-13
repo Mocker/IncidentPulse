@@ -83,6 +83,21 @@ class ServiceEndpoint extends Endpoint {
     return await Service.db.updateRow(session, updated);
   }
 
+  /// Toggles whether a service is actively monitored by health probes.
+  /// Disabled services keep their full configuration but are skipped by
+  /// the probe sweeps until re-enabled.
+  Future<Service?> setMonitoringEnabled(
+    Session session, {
+    required int serviceId,
+    required bool enabled,
+  }) async {
+    final service = await Service.db.findById(session, serviceId);
+    if (service == null) return null;
+
+    final updated = service.copyWith(monitoringEnabled: enabled);
+    return await Service.db.updateRow(session, updated);
+  }
+
   /// Updates tenant privacy, AI bridge opt-in, and compliance retention settings
   Future<Service?> updatePrivacyAndRetention(
     Session session, {

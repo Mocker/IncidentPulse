@@ -30,8 +30,9 @@ abstract class Service
     required this.enableAiBridge,
     required this.dataRetentionDays,
     required this.redactPii,
+    bool? monitoringEnabled,
     required this.createdAt,
-  });
+  }) : monitoringEnabled = monitoringEnabled ?? true;
 
   factory Service({
     int? id,
@@ -48,6 +49,7 @@ abstract class Service
     required bool enableAiBridge,
     required int dataRetentionDays,
     required bool redactPii,
+    bool? monitoringEnabled,
     required DateTime createdAt,
   }) = _ServiceImpl;
 
@@ -74,6 +76,10 @@ abstract class Service
           _is.BoolJsonExtension.fromJson(jsonSerialization['enableAiBridge']),
       dataRetentionDays: jsonSerialization['dataRetentionDays'] as int,
       redactPii: _is.BoolJsonExtension.fromJson(jsonSerialization['redactPii']),
+      monitoringEnabled: jsonSerialization['monitoringEnabled'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['monitoringEnabled']),
       createdAt:
           _is.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
     );
@@ -112,6 +118,8 @@ abstract class Service
 
   bool redactPii;
 
+  bool monitoringEnabled;
+
   DateTime createdAt;
 
   @override
@@ -135,6 +143,7 @@ abstract class Service
     bool? enableAiBridge,
     int? dataRetentionDays,
     bool? redactPii,
+    bool? monitoringEnabled,
     DateTime? createdAt,
   });
   @override
@@ -155,6 +164,7 @@ abstract class Service
       'enableAiBridge': enableAiBridge,
       'dataRetentionDays': dataRetentionDays,
       'redactPii': redactPii,
+      'monitoringEnabled': monitoringEnabled,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -177,6 +187,7 @@ abstract class Service
       'enableAiBridge': enableAiBridge,
       'dataRetentionDays': dataRetentionDays,
       'redactPii': redactPii,
+      'monitoringEnabled': monitoringEnabled,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -227,6 +238,7 @@ class _ServiceImpl extends Service {
     required bool enableAiBridge,
     required int dataRetentionDays,
     required bool redactPii,
+    bool? monitoringEnabled,
     required DateTime createdAt,
   }) : super._(
           id: id,
@@ -243,6 +255,7 @@ class _ServiceImpl extends Service {
           enableAiBridge: enableAiBridge,
           dataRetentionDays: dataRetentionDays,
           redactPii: redactPii,
+          monitoringEnabled: monitoringEnabled,
           createdAt: createdAt,
         );
 
@@ -265,6 +278,7 @@ class _ServiceImpl extends Service {
     bool? enableAiBridge,
     int? dataRetentionDays,
     bool? redactPii,
+    bool? monitoringEnabled,
     DateTime? createdAt,
   }) {
     return Service(
@@ -292,6 +306,7 @@ class _ServiceImpl extends Service {
       enableAiBridge: enableAiBridge ?? this.enableAiBridge,
       dataRetentionDays: dataRetentionDays ?? this.dataRetentionDays,
       redactPii: redactPii ?? this.redactPii,
+      monitoringEnabled: monitoringEnabled ?? this.monitoringEnabled,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -368,6 +383,11 @@ class ServiceUpdateTable extends _is.UpdateTable<ServiceTable> {
         value,
       );
 
+  _is.ColumnValue<bool, bool> monitoringEnabled(bool value) => _is.ColumnValue(
+        table.monitoringEnabled,
+        value,
+      );
+
   _is.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _is.ColumnValue(
         table.createdAt,
@@ -430,6 +450,11 @@ class ServiceTable extends _is.Table<int?> {
       'redactPii',
       this,
     );
+    monitoringEnabled = _is.ColumnBool(
+      'monitoringEnabled',
+      this,
+      hasDefault: true,
+    );
     createdAt = _is.ColumnDateTime(
       'createdAt',
       this,
@@ -464,6 +489,8 @@ class ServiceTable extends _is.Table<int?> {
 
   late final _is.ColumnBool redactPii;
 
+  late final _is.ColumnBool monitoringEnabled;
+
   late final _is.ColumnDateTime createdAt;
 
   @override
@@ -482,6 +509,7 @@ class ServiceTable extends _is.Table<int?> {
         enableAiBridge,
         dataRetentionDays,
         redactPii,
+        monitoringEnabled,
         createdAt,
       ];
 }

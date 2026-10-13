@@ -435,6 +435,13 @@ class Protocol extends _is.DatabaseSerializationManager {
               dartType: 'bool',
             ),
             _isp.ColumnDefinition(
+              name: 'monitoringEnabled',
+              columnType: _isp.ColumnType.boolean,
+              isNullable: false,
+              dartType: 'bool',
+              columnDefault: 'true',
+            ),
+            _isp.ColumnDefinition(
               name: 'createdAt',
               columnType: _isp.ColumnType.timestampWithoutTimeZone,
               isNullable: false,

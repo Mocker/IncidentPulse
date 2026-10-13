@@ -18,6 +18,7 @@ service:
   - createService:
   - updateServicePing:
   - updateServiceStatus:
+  - setMonitoringEnabled:
   - updatePrivacyAndRetention:
   - purgeServiceHistory:
   - runHealthProbes:
