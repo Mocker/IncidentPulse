@@ -13,17 +13,13 @@ class IncidentEndpoint extends Endpoint {
   /// cycle to escalate. When Future Calls ARE available, the sweep no-ops
   /// on already-escalated incidents, so both paths coexist safely.
   Future<List<Incident>> getActiveIncidents(Session session) async {
-    try {
-      await ScheduledTasks.runDueEscalations(session);
-    } catch (e) {
-      session.log('Lazy escalation sweep failed: $e',
-          level: LogLevel.warning);
-    }
-
+    // Note: escalation sweeps run via FutureCall (every 60s), not lazily here.
+    // The lazy sweep was removed after it caused endpoint hangs under load.
     return await Incident.db.find(
       session,
       where: (t) => t.status.notEquals('resolved'),
       orderBy: (t) => t.triggeredAt.desc(),
+      limit: 100,
     );
   }
 
