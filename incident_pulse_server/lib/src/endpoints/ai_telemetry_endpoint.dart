@@ -43,10 +43,15 @@ class AiTelemetryEndpoint extends Endpoint {
 
     final serviceIds = services.map((s) => s.id!).toSet();
 
-    final activeIncidents = await Incident.db.find(
+    // Filter in Dart, not SQL — the status column filter hangs at the DB level.
+    final allIncidents = await Incident.db.find(
       session,
-      where: (t) => t.status.notEquals('resolved') & t.serviceId.inSet(serviceIds),
+      where: (t) => t.serviceId.inSet(serviceIds),
+      orderBy: (t) => t.triggeredAt.desc(),
+      limit: 200,
     );
+    final activeIncidents =
+        allIncidents.where((i) => i.status != 'resolved').toList();
 
     int operational = 0;
     int degraded = 0;
