@@ -29,7 +29,7 @@ jobs:
         run: |
           curl -sS -X POST "${API_URL%/}/incident" \
             -H 'Content-Type: application/json' \
-            -d '{"method":"runDueEscalations","params":{}}'
+            -d '{"method":"runDueEscalations"}'
         env:
           API_URL: ${{ secrets.INCIDENTPULSE_API_URL }}
 
@@ -41,7 +41,7 @@ jobs:
         run: |
           curl -sS -X POST "${API_URL%/}/service" \
             -H 'Content-Type: application/json' \
-            -d '{"method":"runHealthProbes","params":{}}'
+            -d '{"method":"runHealthProbes"}'
         env:
           API_URL: ${{ secrets.INCIDENTPULSE_API_URL }}
 
@@ -53,6 +53,6 @@ jobs:
         run: |
           curl -sS -X POST "${API_URL%/}/service" \
             -H 'Content-Type: application/json' \
-            -d '{"method":"runRetentionCleanup","params":{}}'
+            -d '{"method":"runRetentionCleanup"}'
         env:
           API_URL: ${{ secrets.INCIDENTPULSE_API_URL }}
