@@ -331,34 +331,4 @@ class IncidentEndpoint extends Endpoint {
 
     return created;
   }
-
-  /// Purges all incidents and their events. Requires explicit confirmation.
-  /// Intended for demo/reset purposes — use with caution.
-  Future<int> purgeAllIncidents(
-    Session session, {
-    required String confirmation,
-  }) async {
-    if (confirmation != 'PURGE_ALL_INCIDENTS') {
-      throw Exception('Invalid confirmation. Pass confirmation: "PURGE_ALL_INCIDENTS" to proceed.');
-    }
-
-    // Delete all events first (foreign key constraint)
-    final events = await IncidentEvent.db.find(session);
-    for (final event in events) {
-      await IncidentEvent.db.deleteRow(session, event);
-    }
-
-    // Delete all incidents
-    final incidents = await Incident.db.find(session);
-    for (final incident in incidents) {
-      await Incident.db.deleteRow(session, incident);
-    }
-
-    session.log(
-      'Purged ${incidents.length} incidents and ${events.length} events.',
-      level: LogLevel.warning,
-    );
-
-    return incidents.length;
-  }
 }
