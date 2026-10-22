@@ -10,14 +10,18 @@
 #
 # Required repository secret: INCIDENTPULSE_API_URL — base URL of the
 # deployed API, e.g. https://incident-pulse.<your-host>/ (trailing slash ok).
+#
+# 2026-10-22: schedule triggers removed — the Serverpod hackathon is over and
+# every scheduled run was failing. The workflow remains available for manual
+# runs via workflow_dispatch; re-add the schedule block below to re-enable:
+#   schedule:
+#     - cron: '* * * * *' # escalations: every minute
+#     - cron: '*/5 * * * *' # health probes: every 5 minutes
+#     - cron: '17 3 * * *' # retention cleanup: daily
 
 name: incident-sweeps-fallback
 
 on:
-  schedule:
-    - cron: '* * * * *' # escalations: every minute
-    - cron: '*/5 * * * *' # health probes: every 5 minutes
-    - cron: '17 3 * * *' # retention cleanup: daily
   workflow_dispatch: # manual run triggers all three sweeps
 
 jobs:
